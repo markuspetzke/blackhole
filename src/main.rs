@@ -2,10 +2,15 @@ extern crate glfw;
 use glfw::{Action, Context, Key, fail_on_errors};
 extern crate gl;
 use glam::{Mat4, Vec3};
-use std::ffi::CString;
+use std::{ffi::CString, fs};
 
 const SRC_WIDTH: u32 = 800;
 const SRC_HEIGHT: u32 = 600;
+
+fn load_shader_source(path: &str) -> CString {
+    let source = fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read file"));
+    CString::new(source).unwrap()
+}
 
 fn window() {
     let mut glfw = glfw::init(fail_on_errors!()).unwrap();
@@ -26,24 +31,9 @@ fn window() {
     window.set_key_polling(true);
 
     // Shader sources mit null terminator
-    let vertex_source = CString::new(
-        "#version 330 core
-        layout (location = 0) in vec3 aPos;
-        uniform mat4 transform;
-        void main() {
-            gl_Position = transform * vec4(aPos.x, aPos.y, aPos.z, 1.0);
-        }",
-    )
-    .unwrap();
+    let vertex_source = load_shader_source("./shader/vertex.glsl");
 
-    let fragment_source = CString::new(
-        "#version 330 core
-        out vec4 FragColor;
-        void main() {
-            FragColor = vec4(1.0, 0.5, 0.2, 1.0);
-        }",
-    )
-    .unwrap();
+    let fragment_source = load_shader_source("./shader/fragment.glsl");
 
     let shader_program = unsafe {
         // Vertex shader
@@ -162,4 +152,3 @@ fn window() {
 fn main() {
     window();
 }
-
