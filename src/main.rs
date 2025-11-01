@@ -60,10 +60,10 @@ fn window() {
     };
 
     let vertices: Vec<f32> = vec![
-        0.5, 0.5, 0.0, // oben rechts
-        0.5, -0.5, 0.0, // unten rechts
-        -0.5, -0.5, 0.0, // unten links
-        -0.5, 0.5, 0.0, // oben links
+        50.0, 50.0, 0.0, // oben rechts
+        50.0, -50.0, 0.0, // unten rechts
+        -50.0, -50.0, 0.0, // unten links
+        -50.0, 50.0, 0.0, // oben links
     ];
     let indices: Vec<u32> = vec![
         0, 1, 3, // erstes Dreieck
@@ -119,13 +119,19 @@ fn window() {
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
-
             let time = glfw.get_time() as f32;
-            //Transformation
+
             gl::UseProgram(shader_program);
-            let mut transform = glam::Mat4::IDENTITY;
-            transform = Mat4::from_translation(Vec3::new(0., 0., 0.0)) * transform;
-            transform = Mat4::from_axis_angle(Vec3::Z, time) * transform;
+
+            let ortho = glam::Mat4::orthographic_rh_gl(0.0, 800.0, 0.0, 600.0, -1.0, 1.0);
+
+            let mut model = glam::Mat4::IDENTITY;
+
+            model *= Mat4::from_translation(Vec3::new(400., 300., 0.0));
+            model *= Mat4::from_axis_angle(Vec3::Z, time);
+
+            let transform = ortho * model;
+
             let transformloc =
                 gl::GetUniformLocation(shader_program, "transform".as_ptr() as *const i8);
             gl::UniformMatrix4fv(
