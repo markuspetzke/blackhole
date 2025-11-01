@@ -59,11 +59,21 @@ fn window() {
         program
     };
 
+    let size: f32 = 10.;
+
     let vertices: Vec<f32> = vec![
-        50.0, 50.0, 0.0, // oben rechts
-        50.0, -50.0, 0.0, // unten rechts
-        -50.0, -50.0, 0.0, // unten links
-        -50.0, 50.0, 0.0, // oben links
+        5.0 * size,
+        5.0 * size,
+        0.0 * size, // oben rechts
+        5.0 * size,
+        -5.0 * size,
+        0.0 * size, // unten rechts
+        -5.0 * size,
+        -5.0 * size,
+        0.0 * size, // unten links
+        -5.0 * size,
+        5.0 * size,
+        0.0 * size, // oben links
     ];
     let indices: Vec<u32> = vec![
         0, 1, 3, // erstes Dreieck
