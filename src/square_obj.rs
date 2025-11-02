@@ -48,6 +48,10 @@ impl SquareObject {
                 &transform as *const Mat4 as *const f32,
             );
 
+            let color_name = std::ffi::CString::new("objectColor").unwrap();
+            let colorloc = gl::GetUniformLocation(shader_program, color_name.as_ptr());
+            gl::Uniform3f(colorloc, self.color.x, self.color.y, self.color.z);
+
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
         }

@@ -64,7 +64,7 @@ fn window() {
     let square = SquareObject::new(
         Vec3::new(400.0, 300.0, 0.0),
         100.0,
-        Vec3::new(1.0, 0.5, 0.2),
+        Vec3::new(0.5, 0.5, 0.2),
     );
 
     // Render loop
