@@ -1,7 +1,7 @@
 extern crate glfw;
 use glfw::{Action, Context, Key, fail_on_errors};
 extern crate gl;
-use glam::{Mat4, Vec3};
+use glam::{Mat4, Vec2, Vec3};
 use std::{ffi::CString, fs};
 
 mod square_obj;
@@ -72,17 +72,23 @@ fn window() {
 
     let mut ball = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
+        Vec2::ZERO,
         100.0,
         Vec3::new(0.5, 0.5, 0.2),
     );
+    let mut last_time = glfw.get_time() as f32;
+    let speed = 20000.0;
 
     // Render loop
     while !window.should_close() {
+        let current_time = glfw.get_time() as f32;
+        let delta_time = current_time - last_time;
+
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            square.rotation = glfw.get_time() as f32;
+            // square.rotation = glfw.get_time() as f32;
 
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
@@ -96,21 +102,22 @@ fn window() {
                 glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                     window.set_should_close(true);
                 }
-                glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
-                    ball.position += Vec3::new(10.0, 0.0, 0.0);
+                glfw::WindowEvent::Key(Key::D, _, Action::Repeat, _) => {
+                    ball.position.x += speed * delta_time;
                 }
-                glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
-                    ball.position += Vec3::new(-10.0, 0.0, 0.0);
+                glfw::WindowEvent::Key(Key::A, _, Action::Repeat, _) => {
+                    ball.position.x -= speed * delta_time;
                 }
-                glfw::WindowEvent::Key(Key::W, _, Action::Press, _) => {
-                    ball.position += Vec3::new(0.0, 10.0, 0.0);
+                glfw::WindowEvent::Key(Key::W, _, Action::Repeat, _) => {
+                    ball.position.y += speed * delta_time;
                 }
-                glfw::WindowEvent::Key(Key::S, _, Action::Press, _) => {
-                    ball.position += Vec3::new(0.0, -10.0, 0.0);
+                glfw::WindowEvent::Key(Key::S, _, Action::Repeat, _) => {
+                    ball.position.y -= speed * delta_time;
                 }
                 _ => {}
             }
         }
+        last_time = current_time;
         window.swap_buffers();
     }
 }
