@@ -92,8 +92,23 @@ fn window() {
 
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true)
+            match event {
+                glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
+                    window.set_should_close(true);
+                }
+                glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
+                    ball.position += Vec3::new(10.0, 0.0, 0.0);
+                }
+                glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
+                    ball.position += Vec3::new(-10.0, 0.0, 0.0);
+                }
+                glfw::WindowEvent::Key(Key::W, _, Action::Press, _) => {
+                    ball.position += Vec3::new(0.0, 10.0, 0.0);
+                }
+                glfw::WindowEvent::Key(Key::S, _, Action::Press, _) => {
+                    ball.position += Vec3::new(0.0, -10.0, 0.0);
+                }
+                _ => {}
             }
         }
         window.swap_buffers();
