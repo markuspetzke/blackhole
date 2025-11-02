@@ -30,6 +30,11 @@ impl BallObject {
         square
     }
 
+    pub fn update(&mut self, delta_time: f32) {
+        self.position.x += self.velocity.x * delta_time;
+        self.position.y += self.velocity.y * delta_time;
+    }
+
     pub fn render(&self, shader_program: u32, projection: &Mat4) {
         unsafe {
             gl::UseProgram(shader_program);

@@ -75,7 +75,7 @@ fn window() {
 
     let mut ball = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
-        Vec2::ZERO,
+        Vec2::new(150.0, 200.0),
         100.0,
         Vec3::new(0.5, 0.5, 0.2),
     );
@@ -118,6 +118,34 @@ fn window() {
                     ball.position.y -= speed * delta_time;
                 }
                 _ => {}
+            }
+        }
+
+        ball.update(delta_time);
+
+        let wall_collision = check_wall_collision(
+            ball.position,
+            ball.radius,
+            SRC_WIDTH as f32,
+            SRC_HEIGHT as f32,
+        );
+        if wall_collision.left || wall_collision.right {
+            ball.velocity.x *= -1.0;
+            if wall_collision.left {
+                ball.position.x = ball.radius;
+            }
+            if wall_collision.right {
+                ball.position.x = SRC_WIDTH as f32 - ball.radius;
+            }
+        }
+
+        if wall_collision.top || wall_collision.bottom {
+            ball.velocity.y *= -1.0;
+            if wall_collision.bottom {
+                ball.position.y = ball.radius;
+            }
+            if wall_collision.top {
+                ball.position.y = SRC_HEIGHT as f32 - ball.radius;
             }
         }
 

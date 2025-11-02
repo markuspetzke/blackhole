@@ -22,3 +22,39 @@ pub fn check_ball_square_collision(
 
     distance_squared < (ball_radius * ball_radius)
 }
+
+pub struct WallCollision {
+    pub left: bool,
+    pub right: bool,
+    pub top: bool,
+    pub bottom: bool,
+}
+
+pub fn check_wall_collision(
+    ball_pos: Vec3,
+    ball_radius: f32,
+    screen_width: f32,
+    screen_height: f32,
+) -> WallCollision {
+    let mut collision = WallCollision {
+        left: false,
+        right: false,
+        top: false,
+        bottom: false,
+    };
+
+    if ball_pos.x - ball_radius < 0.0 {
+        collision.left = true;
+    }
+    if ball_pos.x + ball_radius > screen_width {
+        collision.right = true;
+    }
+    if ball_pos.y - ball_radius < 0.0 {
+        collision.bottom = true;
+    }
+    if ball_pos.y + ball_radius > screen_height {
+        collision.top = true;
+    }
+
+    collision
+}
