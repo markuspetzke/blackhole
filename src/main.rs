@@ -91,11 +91,23 @@ fn window() {
     let mut square_objects = vec![square];
 
     let mut last_time = glfw.get_time() as f32;
+    let mut frame_count = 0;
+    let mut fps_timer = 0.0;
 
     // Render loop
     while !window.should_close() {
         let current_time = glfw.get_time() as f32;
         let delta_time = current_time - last_time;
+
+        //FPS
+        frame_count += 1;
+        fps_timer += delta_time;
+        if fps_timer >= 0.5 {
+            let fps = frame_count as f32 / fps_timer;
+            window.set_title(&format!("Test Title - FPS: {fps:.1}"));
+            frame_count = 0;
+            fps_timer = 0.0;
+        }
 
         for ball in &mut ball_objects {
             ball.update(delta_time);
@@ -129,8 +141,6 @@ fn window() {
         }
 
         for ball in &mut ball_objects {
-            let mut collision_detected = false;
-
             for square in &square_objects {
                 if check_ball_square_collision(
                     ball.position,
@@ -139,7 +149,6 @@ fn window() {
                     square.size,
                 ) {
                     ball.velocity *= -1.0;
-                    collision_detected = true;
                     break;
                 }
             }
