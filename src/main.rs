@@ -4,6 +4,9 @@ extern crate gl;
 use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
 
+mod square_obj;
+use square_obj::SquareObject;
+
 const SRC_WIDTH: u32 = 800;
 const SRC_HEIGHT: u32 = 600;
 
@@ -30,7 +33,6 @@ fn window() {
     });
     window.set_key_polling(true);
 
-    // Shader sources mit null terminator
     let vertex_source = load_shader_source("./shader/vertex.glsl");
 
     let fragment_source = load_shader_source("./shader/fragment.glsl");
@@ -59,100 +61,21 @@ fn window() {
         program
     };
 
-    let size: f32 = 10.;
-
-    let vertices: Vec<f32> = vec![
-        5.0 * size,
-        5.0 * size,
-        0.0 * size, // oben rechts
-        5.0 * size,
-        -5.0 * size,
-        0.0 * size, // unten rechts
-        -5.0 * size,
-        -5.0 * size,
-        0.0 * size, // unten links
-        -5.0 * size,
-        5.0 * size,
-        0.0 * size, // oben links
-    ];
-    let indices: Vec<u32> = vec![
-        0, 1, 3, // erstes Dreieck
-        1, 2, 3, // zweites Dreieck
-    ];
-
-    let mut vbo: u32 = 0;
-    let mut vao: u32 = 0;
-    let mut ebo: u32 = 0;
-
-    unsafe {
-        gl::GenVertexArrays(1, &mut vao);
-        gl::GenBuffers(1, &mut vbo);
-        gl::GenBuffers(1, &mut ebo);
-
-        gl::BindVertexArray(vao);
-
-        //VBO
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (vertices.len() * std::mem::size_of::<f32>()) as isize,
-            vertices.as_ptr() as *const std::ffi::c_void,
-            gl::STATIC_DRAW,
-        );
-
-        //EBO
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
-        gl::BufferData(
-            gl::ELEMENT_ARRAY_BUFFER,
-            (indices.len() * std::mem::size_of::<u32>()) as isize,
-            indices.as_ptr() as *const std::ffi::c_void,
-            gl::STATIC_DRAW,
-        );
-
-        //position
-        gl::VertexAttribPointer(
-            0,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            (3 * std::mem::size_of::<f32>()) as i32,
-            std::ptr::null(),
-        );
-        gl::EnableVertexAttribArray(0);
-
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-        gl::BindVertexArray(0);
-    }
+    let square = SquareObject::new(
+        Vec3::new(400.0, 300.0, 0.0),
+        100.0,
+        Vec3::new(1.0, 0.5, 0.2),
+    );
 
     // Render loop
     while !window.should_close() {
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
-            let time = glfw.get_time() as f32;
 
-            gl::UseProgram(shader_program);
-
-            let ortho = glam::Mat4::orthographic_rh_gl(0.0, 800.0, 0.0, 600.0, -1.0, 1.0);
-
-            let mut model = glam::Mat4::IDENTITY;
-
-            model *= Mat4::from_translation(Vec3::new(400., 300., 0.0));
-            model *= Mat4::from_axis_angle(Vec3::Z, time);
-
-            let transform = ortho * model;
-
-            let transformloc =
-                gl::GetUniformLocation(shader_program, "transform".as_ptr() as *const i8);
-            gl::UniformMatrix4fv(
-                transformloc,
-                1,
-                gl::FALSE,
-                &transform as *const Mat4 as *const f32,
-            );
-            gl::BindVertexArray(vao);
-            // gl::DrawArrays(gl::TRIANGLES, 0, 3);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+            let ortho =
+                Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
+            square.render(shader_program, &ortho);
         }
 
         glfw.poll_events();
