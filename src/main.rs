@@ -10,6 +10,9 @@ use square_obj::SquareObject;
 mod ball_obj;
 use ball_obj::BallObject;
 
+mod collision;
+use collision::*;
+
 const SRC_WIDTH: u32 = 800;
 const SRC_HEIGHT: u32 = 600;
 
@@ -92,7 +95,7 @@ fn window() {
 
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
-            // square.render(shader_program, &ortho);
+            square.render(shader_program, &ortho);
             ball.render(shader_program, &ortho);
         }
 
@@ -102,20 +105,28 @@ fn window() {
                 glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                     window.set_should_close(true);
                 }
-                glfw::WindowEvent::Key(Key::D, _, Action::Repeat, _) => {
+                glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
                     ball.position.x += speed * delta_time;
                 }
-                glfw::WindowEvent::Key(Key::A, _, Action::Repeat, _) => {
+                glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
                     ball.position.x -= speed * delta_time;
                 }
-                glfw::WindowEvent::Key(Key::W, _, Action::Repeat, _) => {
+                glfw::WindowEvent::Key(Key::W, _, Action::Press, _) => {
                     ball.position.y += speed * delta_time;
                 }
-                glfw::WindowEvent::Key(Key::S, _, Action::Repeat, _) => {
+                glfw::WindowEvent::Key(Key::S, _, Action::Press, _) => {
                     ball.position.y -= speed * delta_time;
                 }
                 _ => {}
             }
+        }
+
+        if check_ball_square_collision(ball.position, ball.radius, square.position, square.size) {
+            ball.color = Vec3::new(1.0, 1.0, 0.0);
+            square.color = Vec3::new(1.0, 0.5, 0.0);
+        } else {
+            ball.color = Vec3::new(1.0, 0.3, 0.3);
+            square.color = Vec3::new(0.3, 0.8, 1.);
         }
         last_time = current_time;
         window.swap_buffers();
