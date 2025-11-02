@@ -7,6 +7,9 @@ use std::{ffi::CString, fs};
 mod square_obj;
 use square_obj::SquareObject;
 
+mod ball_obj;
+use ball_obj::BallObject;
+
 const SRC_WIDTH: u32 = 800;
 const SRC_HEIGHT: u32 = 600;
 
@@ -67,6 +70,12 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
+    let mut ball = BallObject::new(
+        Vec3::new(400.0, 300.0, 0.0),
+        100.0,
+        Vec3::new(0.5, 0.5, 0.2),
+    );
+
     // Render loop
     while !window.should_close() {
         unsafe {
@@ -77,7 +86,8 @@ fn window() {
 
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
-            square.render(shader_program, &ortho);
+            // square.render(shader_program, &ortho);
+            ball.render(shader_program, &ortho);
         }
 
         glfw.poll_events();

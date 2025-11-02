@@ -1,26 +1,26 @@
 extern crate glfw;
 use glam::{Mat4, Vec3};
 
-pub struct SquareObject {
+pub struct BallObject {
     pub position: Vec3,
-    pub size: f32,
-    pub rotation: f32,
+    pub radius: f32,
     pub color: Vec3,
     vao: u32,
     vbo: u32,
     ebo: u32,
+    vertex_count: i32,
 }
 
-impl SquareObject {
-    pub fn new(position: Vec3, size: f32, color: Vec3) -> Self {
-        let mut square = SquareObject {
+impl BallObject {
+    pub fn new(position: Vec3, radius: f32, color: Vec3) -> Self {
+        let mut square = BallObject {
             position,
-            size,
-            rotation: 0.,
+            radius,
             color,
             vao: 0,
             vbo: 0,
             ebo: 0,
+            vertex_count: 0,
         };
 
         square.mesh();
@@ -28,10 +28,6 @@ impl SquareObject {
         square
     }
 
-    pub fn update(&mut self, rotation: f32, position: Vec3) {
-        self.rotation += rotation;
-        self.position += position;
-    }
     pub fn render(&self, shader_program: u32, projection: &Mat4) {
         unsafe {
             gl::UseProgram(shader_program);
@@ -39,10 +35,6 @@ impl SquareObject {
             let mut model = glam::Mat4::IDENTITY;
 
             model *= Mat4::from_translation(self.position);
-
-            if self.rotation != 0.0 {
-                model *= Mat4::from_axis_angle(Vec3::Z, self.rotation);
-            }
 
             let transform = *projection * model;
 
@@ -60,20 +52,35 @@ impl SquareObject {
             gl::Uniform3f(colorloc, self.color.x, self.color.y, self.color.z);
 
             gl::BindVertexArray(self.vao);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+            gl::DrawElements(
+                gl::TRIANGLES,
+                self.vertex_count,
+                gl::UNSIGNED_INT,
+                std::ptr::null(),
+            );
         }
     }
 
     fn mesh(&mut self) {
-        let half = self.size / 2.0;
-        let vertices: Vec<f32> = vec![
-            half, half, 0.0, // oben rechts
-            half, -half, 0.0, // unten rechts
-            -half, -half, 0.0, // unten links
-            -half, half, 0.0, // oben links
-        ];
+        let segments = 32;
+        let mut vertices: Vec<f32> = Vec::new();
+        let mut indices: Vec<u32> = Vec::new();
 
-        let indices: Vec<u32> = vec![0, 1, 3, 1, 2, 3];
+        vertices.extend_from_slice(&[0.0, 0.0, 0.0]);
+
+        for i in 0..=segments {
+            let angle = (i as f32 / segments as f32) * 2.0 * std::f32::consts::PI;
+            let x = angle.cos() * self.radius;
+            let y = angle.sin() * self.radius;
+            vertices.extend_from_slice(&[x, y, 0.0]);
+        }
+
+        for i in 1..=segments {
+            indices.push(0);
+            indices.push(i);
+            indices.push(i + 1);
+        }
+        self.vertex_count = indices.len() as i32;
         unsafe {
             gl::GenVertexArrays(1, &mut self.vao);
             gl::GenBuffers(1, &mut self.vbo);
