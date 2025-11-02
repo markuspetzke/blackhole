@@ -61,7 +61,7 @@ fn window() {
         program
     };
 
-    let square = SquareObject::new(
+    let mut square = SquareObject::new(
         Vec3::new(400.0, 300.0, 0.0),
         100.0,
         Vec3::new(0.5, 0.5, 0.2),
@@ -72,6 +72,8 @@ fn window() {
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
+
+            square.rotation = glfw.get_time() as f32;
 
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);

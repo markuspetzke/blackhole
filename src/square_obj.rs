@@ -4,7 +4,7 @@ use glam::{Mat4, Vec3};
 pub struct SquareObject {
     pub position: Vec3,
     pub size: f32,
-    pub rotation: Vec3,
+    pub rotation: f32,
     pub color: Vec3,
     vao: u32,
     vbo: u32,
@@ -17,7 +17,7 @@ impl SquareObject {
         let mut square = SquareObject {
             position,
             size,
-            rotation: Vec3::ZERO,
+            rotation: 0.,
             color,
             vao: 0,
             vbo: 0,
@@ -29,6 +29,11 @@ impl SquareObject {
 
         square
     }
+
+    pub fn update(&mut self, rotation: f32, position: Vec3) {
+        self.rotation += rotation;
+        self.position += position;
+    }
     pub fn render(&self, shader_program: u32, projection: &Mat4) {
         unsafe {
             gl::UseProgram(shader_program);
@@ -36,6 +41,10 @@ impl SquareObject {
             let mut model = glam::Mat4::IDENTITY;
 
             model *= Mat4::from_translation(self.position);
+
+            if self.rotation != 0.0 {
+                model *= Mat4::from_axis_angle(Vec3::Z, self.rotation);
+            }
 
             let transform = *projection * model;
 
