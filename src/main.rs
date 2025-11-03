@@ -32,6 +32,7 @@ fn window() {
         )
         .expect("Failed to create Window");
     window.make_current();
+    glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
     gl::load_with(|s| {
         window
             .get_proc_address(s)
