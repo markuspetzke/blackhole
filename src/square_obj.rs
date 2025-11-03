@@ -60,6 +60,34 @@ impl SquareObject {
         }
     }
 
+    pub fn get_normal_relative_to(&self, i: usize) -> Vec3 {
+        let half = self.size / 2.0;
+
+        let vertices: Vec<Vec2> = vec![
+            Vec2::new(half, half),   // oben rechts
+            Vec2::new(half, -half),  // unten rechts
+            Vec2::new(-half, -half), // unten links
+            Vec2::new(-half, half),  // oben links
+        ];
+
+        let p1 = vertices[i];
+
+        let p2 = vertices[(i + 1) % 4];
+
+        let edge = p2 - p1;
+
+        let local_normal = Vec2::new(-edge.y, edge.x).normalize();
+
+        let cos = self.rotation.cos();
+        let sin = self.rotation.sin();
+
+        Vec3::new(
+            local_normal.x * cos - local_normal.y * sin,
+            local_normal.x * sin + local_normal.y * cos,
+            0.,
+        )
+    }
+
     pub fn get_normals(&self) -> Vec<Vec2> {
         let half = self.size / 2.0;
 

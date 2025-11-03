@@ -117,7 +117,7 @@ fn window() {
 
     let count = 1;
 
-    let mut normal_square = Vec3::ZERO;
+    let mut normal_square: usize = 0;
 
     // Render loop
     while !window.should_close() {
@@ -189,15 +189,16 @@ fn window() {
 
             for ball in &mut ball_objects {
                 for square in &mut square_objects {
-                    if check_ball_square_collision(
+                    let (collided, side_index) = check_ball_square_collision(
                         ball.position,
                         ball.radius,
                         square.position,
                         square.size,
-                    ) {
+                    );
+                    if collided {
                         ball.velocity *= -1.0;
 
-                        normal_square = (ball.position - square.position).normalize();
+                        normal_square = side_index;
 
                         square.color = Vec3::new(1.0, 0.5, 0.0);
                         break;
@@ -232,7 +233,7 @@ fn window() {
 
             line_renderer.draw_vector(
                 square_objects[0].position,
-                normal_square,
+                square_objects[0].get_normal_relative_to(normal_square),
                 100.0,
                 Vec3::new(0.0, 1.0, 0.0),
                 shader_program,
