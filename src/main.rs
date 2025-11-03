@@ -87,7 +87,14 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let mut ball_objects: Vec<BallObject> = vec![ball];
+    let ball2 = BallObject::new(
+        Vec3::new(200.0, 400.0, 0.0),
+        Vec2::new(0., 100.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+    );
+
+    let mut ball_objects: Vec<BallObject> = vec![ball, ball2];
     let mut square_objects: Vec<SquareObject> = vec![square];
 
     let mut last_time = glfw.get_time() as f32;
@@ -95,6 +102,8 @@ fn window() {
     let mut fps_timer = 0.0;
 
     let count = 1;
+
+    let mut normal_square = Vec3::ZERO;
 
     // Render loop
     while !window.should_close() {
@@ -145,24 +154,6 @@ fn window() {
             }
         }
 
-        for ball in &mut ball_objects {
-            for square in &mut square_objects {
-                if check_ball_square_collision(
-                    ball.position,
-                    ball.radius,
-                    square.position,
-                    square.size,
-                ) {
-                    ball.velocity *= -1.0;
-
-                    square.color = Vec3::new(1.0, 0.5, 0.0);
-                    break;
-                } else {
-                    square.color = Vec3::new(0.3, 0.8, 1.0);
-                }
-            }
-        }
-
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
@@ -181,6 +172,58 @@ fn window() {
                     &ortho,
                 );
             }
+
+            for ball in &mut ball_objects {
+                for square in &mut square_objects {
+                    if check_ball_square_collision(
+                        ball.position,
+                        ball.radius,
+                        square.position,
+                        square.size,
+                    ) {
+                        ball.velocity *= -1.0;
+
+                        normal_square = (ball.position - square.position).normalize();
+
+                        square.color = Vec3::new(1.0, 0.5, 0.0);
+                        break;
+                    } else {
+                        square.color = Vec3::new(0.3, 0.8, 1.0);
+                    }
+                }
+            }
+
+            for square in &square_objects {
+                let normals = square.get_normals();
+                let half = square.size / 2.0;
+
+                let colors = [
+                    Vec3::new(1.0, 0.0, 0.0),
+                    Vec3::new(0.0, 1.0, 0.0),
+                    Vec3::new(0.0, 0.0, 1.0),
+                    Vec3::new(1.0, 1.0, 0.0),
+                ];
+
+                for (i, normal) in normals.iter().enumerate() {
+                    line_renderer.draw_vector(
+                        square.position,
+                        Vec3::new(normal.x, normal.y, 0.0),
+                        half + 30.0,
+                        colors[i],
+                        shader_program,
+                        &ortho,
+                    );
+                }
+            }
+
+            line_renderer.draw_vector(
+                square_objects[0].position,
+                normal_square,
+                100.0,
+                Vec3::new(0.0, 1.0, 0.0),
+                shader_program,
+                &ortho,
+            );
 
             for square in &square_objects {
                 square.render(shader_program, &ortho);

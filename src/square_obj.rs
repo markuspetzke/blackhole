@@ -1,5 +1,5 @@
 extern crate glfw;
-use glam::{Mat4, Vec3};
+use glam::{Mat4, Vec2, Vec3};
 
 pub struct SquareObject {
     pub position: Vec3,
@@ -58,6 +58,41 @@ impl SquareObject {
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
         }
+    }
+
+    pub fn get_normals(&self) -> Vec<Vec2> {
+        let half = self.size / 2.0;
+
+        let vertices: Vec<Vec2> = vec![
+            Vec2::new(half, half),   // oben rechts
+            Vec2::new(half, -half),  // unten rechts
+            Vec2::new(-half, -half), // unten links
+            Vec2::new(-half, half),  // oben links
+        ];
+
+        let mut normals = Vec::new();
+
+        for i in 0..4 {
+            let p1 = vertices[i];
+
+            let p2 = vertices[(i + 1) % 4];
+
+            let edge = p2 - p1;
+
+            let local_normal = Vec2::new(-edge.y, edge.x).normalize();
+
+            let cos = self.rotation.cos();
+            let sin = self.rotation.sin();
+
+            let world_normal = Vec2::new(
+                local_normal.x * cos - local_normal.y * sin,
+                local_normal.x * sin + local_normal.y * cos,
+            );
+
+            normals.push(world_normal);
+        }
+
+        normals
     }
 
     fn mesh(&mut self) {
