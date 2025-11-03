@@ -18,7 +18,21 @@ pub fn check_ball_square_collision(
 
     let distance_x = ball_pos.x - closest_x;
     let distance_y = ball_pos.y - closest_y;
+
     let distance_squared = distance_x * distance_x + distance_y * distance_y;
+
+    if distance_squared < (ball_radius * ball_radius) {
+        println!("HIT! x: {distance_x} , y: {distance_y}");
+        if distance_x > 0. && distance_y == 0. {
+            println!("Rechts");
+        } else if distance_x == 0. && distance_y > 0. {
+            println!("Oben");
+        } else if distance_x < 0. && distance_y == 0. {
+            println!("Links");
+        } else if distance_x == 0. && distance_y < 0. {
+            println!("Unten");
+        }
+    }
 
     distance_squared < (ball_radius * ball_radius)
 }

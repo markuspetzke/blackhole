@@ -94,7 +94,21 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let mut ball_objects: Vec<BallObject> = vec![ball, ball2];
+    let ball_links = BallObject::new(
+        Vec3::new(100.0, 300.0, 0.0),
+        Vec2::new(100., 0.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+    );
+
+    let ball_unten = BallObject::new(
+        Vec3::new(200.0, 100.0, 0.0),
+        Vec2::new(0., 100.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+    );
+
+    let mut ball_objects: Vec<BallObject> = vec![ball, ball2, ball_links, ball_unten];
     let mut square_objects: Vec<SquareObject> = vec![square];
 
     let mut last_time = glfw.get_time() as f32;
