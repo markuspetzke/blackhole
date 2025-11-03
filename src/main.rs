@@ -13,6 +13,9 @@ use ball_obj::BallObject;
 mod collision;
 use collision::*;
 
+mod line_renderer;
+use line_renderer::LineRenderer;
+
 const SRC_WIDTH: u32 = 800;
 const SRC_HEIGHT: u32 = 600;
 
@@ -68,20 +71,30 @@ fn window() {
         program
     };
 
+    let line_renderer = LineRenderer::new();
+
     let square = SquareObject::new(
         Vec3::new(200.0, 300.0, 0.0),
+        50.,
         100.0,
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let mut ball_objects: Vec<BallObject> = Vec::new();
+    let ball = BallObject::new(
+        Vec3::new(400.0, 300.0, 0.0),
+        Vec2::new(-100., 0.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+    );
+
+    let mut ball_objects: Vec<BallObject> = vec![ball];
     let mut square_objects: Vec<SquareObject> = vec![square];
 
     let mut last_time = glfw.get_time() as f32;
     let mut frame_count = 0;
     let mut fps_timer = 0.0;
 
-    let mut count = 10;
+    let count = 1;
 
     // Render loop
     while !window.should_close() {
@@ -133,7 +146,7 @@ fn window() {
         }
 
         for ball in &mut ball_objects {
-            for square in &square_objects {
+            for square in &mut square_objects {
                 if check_ball_square_collision(
                     ball.position,
                     ball.radius,
@@ -141,29 +154,12 @@ fn window() {
                     square.size,
                 ) {
                     ball.velocity *= -1.0;
-                    break;
-                }
-            }
-        }
 
-        for square in &mut square_objects {
-            let mut collision = false;
-            for ball in &ball_objects {
-                if check_ball_square_collision(
-                    ball.position,
-                    ball.radius,
-                    square.position,
-                    square.size,
-                ) {
-                    collision = true;
+                    square.color = Vec3::new(1.0, 0.5, 0.0);
                     break;
+                } else {
+                    square.color = Vec3::new(0.3, 0.8, 1.0);
                 }
-            }
-
-            if collision {
-                square.color = Vec3::new(1.0, 0.5, 0.0);
-            } else {
-                square.color = Vec3::new(0.3, 0.8, 1.0);
             }
         }
 
@@ -175,6 +171,15 @@ fn window() {
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
             for ball in &ball_objects {
                 ball.render(shader_program, &ortho);
+
+                line_renderer.draw_vector(
+                    ball.position,
+                    Vec3::new(ball.velocity.x, ball.velocity.y, 0.0),
+                    50.0,
+                    Vec3::new(1.0, 0.0, 0.0),
+                    shader_program,
+                    &ortho,
+                );
             }
 
             for square in &square_objects {
@@ -187,12 +192,6 @@ fn window() {
             match event {
                 glfw::WindowEvent::Key(Key::Space, _, Action::Press, _) => {
                     random_balls(&mut ball_objects, count);
-                }
-                glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
-                    count += 1;
-                }
-                glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
-                    count -= 1;
                 }
                 glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
                     ball_objects.clear();
@@ -208,7 +207,7 @@ fn window() {
 }
 
 fn random_balls(array: &mut Vec<BallObject>, count: i32) {
-    for _i in 1..count {
+    for _i in 0..count {
         let rng_size = rand::random_range(1.0..=10.);
         let rng_velox = rand::random_range(1.0..=5.);
         let rng_veloy = rand::random_range(1.0..=5.);

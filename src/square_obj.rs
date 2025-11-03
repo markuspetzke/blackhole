@@ -12,11 +12,11 @@ pub struct SquareObject {
 }
 
 impl SquareObject {
-    pub fn new(position: Vec3, size: f32, color: Vec3) -> Self {
+    pub fn new(position: Vec3, rotation: f32, size: f32, color: Vec3) -> Self {
         let mut square = SquareObject {
             position,
             size,
-            rotation: 0.,
+            rotation,
             color,
             vao: 0,
             vbo: 0,
@@ -28,10 +28,6 @@ impl SquareObject {
         square
     }
 
-    pub fn update(&mut self, rotation: f32, position: Vec3) {
-        self.rotation += rotation;
-        self.position += position;
-    }
     pub fn render(&self, shader_program: u32, projection: &Mat4) {
         unsafe {
             gl::UseProgram(shader_program);
