@@ -74,26 +74,14 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let ball1 = BallObject::new(
-        Vec3::new(400.0, 300.0, 0.0),
-        Vec2::new(150.0, 200.0),
-        10.0,
-        Vec3::new(0.5, 0.5, 0.2),
-    );
-
-    let ball2 = BallObject::new(
-        Vec3::new(500.0, 200.0, 0.0),
-        Vec2::new(150.0, 200.0),
-        10.0,
-        Vec3::new(0.5, 0.5, 0.2),
-    );
-
-    let mut ball_objects = vec![ball1, ball2];
-    let mut square_objects = vec![square];
+    let mut ball_objects: Vec<BallObject> = Vec::new();
+    let mut square_objects: Vec<SquareObject> = vec![square];
 
     let mut last_time = glfw.get_time() as f32;
     let mut frame_count = 0;
     let mut fps_timer = 0.0;
+
+    let mut count = 10;
 
     // Render loop
     while !window.should_close() {
@@ -105,7 +93,10 @@ fn window() {
         fps_timer += delta_time;
         if fps_timer >= 0.5 {
             let fps = frame_count as f32 / fps_timer;
-            window.set_title(&format!("Test Title - FPS: {fps:.1}"));
+            window.set_title(&format!(
+                "Test Title - FPS: {fps:.1} - Ball Count: {}",
+                ball_objects.len()
+            ));
             frame_count = 0;
             fps_timer = 0.0;
         }
@@ -193,13 +184,48 @@ fn window() {
 
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true);
+            match event {
+                glfw::WindowEvent::Key(Key::Space, _, Action::Press, _) => {
+                    random_balls(&mut ball_objects, count);
+                }
+                glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
+                    count += 1;
+                }
+                glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
+                    count -= 1;
+                }
+                glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
+                    ball_objects.clear();
+                }
+
+                _ => {}
             }
         }
 
         last_time = current_time;
         window.swap_buffers();
+    }
+}
+
+fn random_balls(array: &mut Vec<BallObject>, count: i32) {
+    for _i in 1..count {
+        let rng_size = rand::random_range(1.0..=10.);
+        let rng_velox = rand::random_range(1.0..=5.);
+        let rng_veloy = rand::random_range(1.0..=5.);
+        let rng_posx = rand::random_range(0.0..=1.);
+        let rng_posy = rand::random_range(0.0..=1.);
+
+        let ball = BallObject::new(
+            Vec3::new(400.0 * rng_posx, 300.0 * rng_posy, 0.0),
+            Vec2::new(150.0 * rng_velox, 200.0 * rng_veloy),
+            rng_size,
+            Vec3::new(
+                rand::random_range(0.0..=1.0),
+                rand::random_range(0.0..=1.0),
+                rand::random_range(0.0..=1.0),
+            ),
+        );
+        array.push(ball);
     }
 }
 
