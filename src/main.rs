@@ -1,7 +1,7 @@
 extern crate glfw;
 use glfw::{Action, Context, Key, fail_on_errors};
 extern crate gl;
-use glam::{Mat4, Vec2, Vec3};
+use glam::{Mat3, Mat4, Vec2, Vec3};
 use std::{ffi::CString, fs};
 
 mod square_obj;
@@ -82,28 +82,28 @@ fn window() {
 
     let ball = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
-        Vec2::new(-100., 0.),
+        Vec3::new(-100., 0., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
     );
 
     let ball2 = BallObject::new(
         Vec3::new(200.0, 400.0, 0.0),
-        Vec2::new(0., 100.),
+        Vec3::new(0., 100., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
     );
 
     let ball_links = BallObject::new(
         Vec3::new(100.0, 300.0, 0.0),
-        Vec2::new(100., 0.),
+        Vec3::new(100., 0., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
     );
 
     let ball_unten = BallObject::new(
         Vec3::new(200.0, 100.0, 0.0),
-        Vec2::new(0., 100.),
+        Vec3::new(0., 100., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
     );
@@ -117,7 +117,8 @@ fn window() {
 
     let count = 1;
 
-    let mut normal_square: usize = 0;
+    let mut normal_square: Vec3 = Vec3::ZERO;
+    let mut bounce_vector: Vec3 = Vec3::ZERO;
 
     // Render loop
     while !window.should_close() {
@@ -196,9 +197,10 @@ fn window() {
                         square.size,
                     );
                     if collided {
-                        ball.velocity *= -1.0;
+                        normal_square = square.get_normal_relative_to(side_index);
 
-                        normal_square = side_index;
+                        ball.velocity =
+                            ball.velocity - 2.0 * ball.velocity.dot(normal_square) * normal_square;
 
                         square.color = Vec3::new(1.0, 0.5, 0.0);
                         break;
@@ -233,7 +235,7 @@ fn window() {
 
             line_renderer.draw_vector(
                 square_objects[0].position,
-                square_objects[0].get_normal_relative_to(normal_square),
+                bounce_vector,
                 100.0,
                 Vec3::new(0.0, 1.0, 0.0),
                 shader_program,
@@ -274,7 +276,7 @@ fn random_balls(array: &mut Vec<BallObject>, count: i32) {
 
         let ball = BallObject::new(
             Vec3::new(400.0 * rng_posx, 300.0 * rng_posy, 0.0),
-            Vec2::new(150.0 * rng_velox, 200.0 * rng_veloy),
+            Vec3::new(150.0 * rng_velox, 200.0 * rng_veloy, 0.),
             rng_size,
             Vec3::new(
                 rand::random_range(0.0..=1.0),

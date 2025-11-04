@@ -3,7 +3,7 @@ use glam::{Mat4, Vec2, Vec3};
 
 pub struct BallObject {
     pub position: Vec3,
-    pub velocity: Vec2,
+    pub velocity: Vec3,
     pub radius: f32,
     pub color: Vec3,
     vao: u32,
@@ -13,7 +13,7 @@ pub struct BallObject {
 }
 
 impl BallObject {
-    pub fn new(position: Vec3, velocity: Vec2, radius: f32, color: Vec3) -> Self {
+    pub fn new(position: Vec3, velocity: Vec3, radius: f32, color: Vec3) -> Self {
         let mut square = BallObject {
             position,
             velocity,
