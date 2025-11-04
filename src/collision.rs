@@ -1,49 +1,48 @@
 use glam::Vec3;
 
-// AABB
+//OBB
 pub fn check_ball_square_collision(
-    mut ball_pos: Vec3,
+    ball_pos: Vec3,
     ball_radius: f32,
     square_pos: Vec3,
     square_size: f32,
+    square_rotation: f32,
 ) -> (bool, usize, Vec3) {
     let half_size = square_size / 2.0;
 
-    let closest_x = ball_pos
-        .x
-        .clamp(square_pos.x - half_size, square_pos.x + half_size);
-    let closest_y = ball_pos
-        .y
-        .clamp(square_pos.y - half_size, square_pos.y + half_size);
+    let sin_r = square_rotation.sin();
+    let cos_r = square_rotation.cos();
 
-    let distance_x = ball_pos.x - closest_x;
-    let distance_y = ball_pos.y - closest_y;
+    let local_x = cos_r * (ball_pos.x - square_pos.x) + sin_r * (ball_pos.y - square_pos.y);
+    let local_y = -sin_r * (ball_pos.x - square_pos.x) + cos_r * (ball_pos.y - square_pos.y);
+    let local_ball = Vec3::new(local_x, local_y, 0.0);
 
-    let diff = Vec3::new(ball_pos.x - closest_x, ball_pos.y - closest_y, 0.0);
-    let distance_squared = distance_x * distance_x + distance_y * distance_y;
+    let closest_x = local_ball.x.clamp(-half_size, half_size);
+    let closest_y = local_ball.y.clamp(-half_size, half_size);
+    let diff = local_ball - Vec3::new(closest_x, closest_y, 0.0);
+    let dist_sq = diff.length_squared();
+
     let mut side: usize = 0;
 
-    if distance_squared < ball_radius * ball_radius {
-        let dist = distance_squared.sqrt();
-        let normal = if dist != 0.0 {
-            diff / dist
-        } else {
-            Vec3::new(1.0, 0.0, 0.0)
-        };
-
-        let penetration = ball_radius - dist;
-
-        let correction = normal * penetration;
-
-        ball_pos += correction;
-
+    if dist_sq < ball_radius * ball_radius {
         if diff.x.abs() > diff.y.abs() {
             side = if diff.x > 0. { 0 } else { 2 };
         } else {
             side = if diff.y > 0. { 1 } else { 3 };
         }
 
-        return (true, side, ball_pos);
+        let dist = dist_sq.sqrt();
+        let penetration = ball_radius - dist;
+        let normal = if dist != 0.0 { diff / dist } else { Vec3::X };
+
+        let correction_local = normal * penetration;
+        let new_local_ball = local_ball + correction_local;
+
+        let world_x = cos_r * new_local_ball.x - sin_r * new_local_ball.y + square_pos.x;
+        let world_y = sin_r * new_local_ball.x + cos_r * new_local_ball.y + square_pos.y;
+
+        let new_ball_pos = Vec3::new(world_x, world_y, 0.0);
+        return (true, side, new_ball_pos);
     }
 
     (false, side, ball_pos)

@@ -94,13 +94,6 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let ball_top2 = BallObject::new(
-        Vec3::new(200.0, 450.0, 0.0),
-        Vec3::new(0., 100., 0.),
-        10.,
-        Vec3::new(0.5, 0.5, 0.2),
-    );
-
     let ball_links = BallObject::new(
         Vec3::new(100.0, 300.0, 0.0),
         Vec3::new(100., 0., 0.),
@@ -115,18 +108,7 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let mut ball_objects: Vec<BallObject> = vec![ball_top, ball_top2];
-
-    for i in 0..10 {
-        let ball = BallObject::new(
-            Vec3::new(150.0 + (i as f32 * 10.), 400.0 + (i as f32 * 10.), 0.0),
-            Vec3::new(0., 25., 0.),
-            10.,
-            Vec3::new(0.5, 0.5, 0.2),
-        );
-
-        ball_objects.push(ball);
-    }
+    let mut ball_objects: Vec<BallObject> = vec![ball_top, ball_unten, ball_links, ball_rechts];
 
     let mut square_objects: Vec<SquareObject> = vec![square];
 
@@ -193,6 +175,7 @@ fn window() {
                     ball.radius,
                     square.position,
                     square.size,
+                    square.rotation,
                 );
                 if collided {
                     let normal = square.get_normal_relative_to(side_index);

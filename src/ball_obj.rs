@@ -1,5 +1,5 @@
 extern crate glfw;
-use glam::{Mat4, Vec2, Vec3};
+use glam::{Mat4, Vec3};
 
 pub struct BallObject {
     pub position: Vec3,
