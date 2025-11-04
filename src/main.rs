@@ -1,7 +1,7 @@
 extern crate glfw;
 use glfw::{Action, Context, Key, fail_on_errors};
 extern crate gl;
-use glam::{Mat3, Mat4, Vec2, Vec3};
+use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
 
 mod square_obj;
@@ -75,20 +75,27 @@ fn window() {
 
     let square = SquareObject::new(
         Vec3::new(200.0, 300.0, 0.0),
-        50.,
+        std::f32::consts::PI / 6.,
         100.0,
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let ball = BallObject::new(
+    let ball_rechts = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
         Vec3::new(-100., 0., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let ball2 = BallObject::new(
+    let ball_top = BallObject::new(
         Vec3::new(200.0, 400.0, 0.0),
+        Vec3::new(0., 100., 0.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+    );
+
+    let ball_top2 = BallObject::new(
+        Vec3::new(200.0, 450.0, 0.0),
         Vec3::new(0., 100., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
@@ -108,7 +115,19 @@ fn window() {
         Vec3::new(0.5, 0.5, 0.2),
     );
 
-    let mut ball_objects: Vec<BallObject> = vec![ball, ball2, ball_links, ball_unten];
+    let mut ball_objects: Vec<BallObject> = vec![ball_top, ball_top2];
+
+    for i in 0..10 {
+        let ball = BallObject::new(
+            Vec3::new(150.0 + (i as f32 * 10.), 400.0 + (i as f32 * 10.), 0.0),
+            Vec3::new(0., 25., 0.),
+            10.,
+            Vec3::new(0.5, 0.5, 0.2),
+        );
+
+        ball_objects.push(ball);
+    }
+
     let mut square_objects: Vec<SquareObject> = vec![square];
 
     let mut last_time = glfw.get_time() as f32;
@@ -117,13 +136,12 @@ fn window() {
 
     let count = 1;
 
-    let mut normal_square: Vec3 = Vec3::ZERO;
-    let mut bounce_vector: Vec3 = Vec3::ZERO;
+    let mut normal_square = Vec3::ZERO;
 
     // Render loop
     while !window.should_close() {
         let current_time = glfw.get_time() as f32;
-        let delta_time = current_time - last_time;
+        let delta_time = (current_time - last_time).min(0.1);
 
         //FPS
         frame_count += 1;
@@ -138,33 +156,58 @@ fn window() {
             fps_timer = 0.0;
         }
 
+        //Update physics for balls
         for ball in &mut ball_objects {
             ball.update(delta_time);
 
-            let wall_collision = check_wall_collision(
+            let wall = check_wall_collision(
                 ball.position,
                 ball.radius,
                 SRC_WIDTH as f32,
                 SRC_HEIGHT as f32,
             );
 
-            if wall_collision.left || wall_collision.right {
+            if wall.left || wall.right {
                 ball.velocity.x *= -1.0;
-                if wall_collision.left {
+                if wall.left {
                     ball.position.x = ball.radius;
-                }
-                if wall_collision.right {
+                } else if wall.right {
                     ball.position.x = SRC_WIDTH as f32 - ball.radius;
                 }
             }
 
-            if wall_collision.top || wall_collision.bottom {
+            if wall.top || wall.bottom {
                 ball.velocity.y *= -1.0;
-                if wall_collision.bottom {
+                if wall.bottom {
                     ball.position.y = ball.radius;
-                }
-                if wall_collision.top {
+                } else if wall.top {
                     ball.position.y = SRC_HEIGHT as f32 - ball.radius;
+                }
+            }
+        }
+
+        for ball in &mut ball_objects {
+            for square in &mut square_objects {
+                let (collided, side_index, ball_pos) = check_ball_square_collision(
+                    ball.position,
+                    ball.radius,
+                    square.position,
+                    square.size,
+                );
+                if collided {
+                    let normal = square.get_normal_relative_to(side_index);
+
+                    ball.position = ball_pos;
+
+                    ball.velocity -= 2.0 * ball.velocity.dot(normal) * normal;
+                    // ball.velocity *= 0.9; //Damping
+
+                    normal_square = Vec3::new(ball.velocity.x, ball.velocity.y, 0.0);
+
+                    square.color = Vec3::new(1.0, 0.5, 0.0);
+                    break;
+                } else {
+                    square.color = Vec3::new(0.3, 0.8, 1.0);
                 }
             }
         }
@@ -175,6 +218,7 @@ fn window() {
 
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
+
             for ball in &ball_objects {
                 ball.render(shader_program, &ortho);
 
@@ -188,26 +232,15 @@ fn window() {
                 );
             }
 
-            for ball in &mut ball_objects {
-                for square in &mut square_objects {
-                    let (collided, side_index) = check_ball_square_collision(
-                        ball.position,
-                        ball.radius,
-                        square.position,
-                        square.size,
-                    );
-                    if collided {
-                        normal_square = square.get_normal_relative_to(side_index);
-
-                        ball.velocity =
-                            ball.velocity - 2.0 * ball.velocity.dot(normal_square) * normal_square;
-
-                        square.color = Vec3::new(1.0, 0.5, 0.0);
-                        break;
-                    } else {
-                        square.color = Vec3::new(0.3, 0.8, 1.0);
-                    }
-                }
+            if normal_square != Vec3::ZERO {
+                line_renderer.draw_vector(
+                    square_objects[0].position,
+                    normal_square,
+                    100.0,
+                    Vec3::new(0.0, 1.0, 0.0),
+                    shader_program,
+                    &ortho,
+                );
             }
 
             for square in &square_objects {
@@ -231,18 +264,7 @@ fn window() {
                         &ortho,
                     );
                 }
-            }
 
-            line_renderer.draw_vector(
-                square_objects[0].position,
-                bounce_vector,
-                100.0,
-                Vec3::new(0.0, 1.0, 0.0),
-                shader_program,
-                &ortho,
-            );
-
-            for square in &square_objects {
                 square.render(shader_program, &ortho);
             }
         }

@@ -2,11 +2,11 @@ use glam::Vec3;
 
 // AABB
 pub fn check_ball_square_collision(
-    ball_pos: Vec3,
+    mut ball_pos: Vec3,
     ball_radius: f32,
     square_pos: Vec3,
     square_size: f32,
-) -> (bool, usize) {
+) -> (bool, usize, Vec3) {
     let half_size = square_size / 2.0;
 
     let closest_x = ball_pos
@@ -19,27 +19,34 @@ pub fn check_ball_square_collision(
     let distance_x = ball_pos.x - closest_x;
     let distance_y = ball_pos.y - closest_y;
 
+    let diff = Vec3::new(ball_pos.x - closest_x, ball_pos.y - closest_y, 0.0);
     let distance_squared = distance_x * distance_x + distance_y * distance_y;
     let mut side: usize = 0;
 
-    if distance_squared < (ball_radius * ball_radius) {
-        println!("HIT! x: {distance_x} , y: {distance_y}");
-        if distance_x > 0. && distance_y == 0. {
-            println!("Rechts");
-            side = 0;
-        } else if distance_x == 0. && distance_y > 0. {
-            println!("Oben");
-            side = 1;
-        } else if distance_x < 0. && distance_y == 0. {
-            println!("Links");
-            side = 2;
-        } else if distance_x == 0. && distance_y < 0. {
-            println!("Unten");
-            side = 3;
+    if distance_squared < ball_radius * ball_radius {
+        let dist = distance_squared.sqrt();
+        let normal = if dist != 0.0 {
+            diff / dist
+        } else {
+            Vec3::new(1.0, 0.0, 0.0)
+        };
+
+        let penetration = ball_radius - dist;
+
+        let correction = normal * penetration;
+
+        ball_pos += correction;
+
+        if diff.x.abs() > diff.y.abs() {
+            side = if diff.x > 0. { 0 } else { 2 };
+        } else {
+            side = if diff.y > 0. { 1 } else { 3 };
         }
+
+        return (true, side, ball_pos);
     }
 
-    (distance_squared < (ball_radius * ball_radius), side)
+    (false, side, ball_pos)
 }
 
 pub struct WallCollision {
