@@ -13,6 +13,8 @@ use ball_obj::BallObject;
 mod collision;
 use collision::*;
 
+mod gravity;
+
 mod line_renderer;
 use line_renderer::LineRenderer;
 
@@ -26,6 +28,7 @@ fn load_shader_source(path: &str) -> CString {
 
 fn window() {
     let mut glfw = glfw::init(fail_on_errors!()).unwrap();
+
     let (mut window, events) = glfw
         .create_window(
             SRC_WIDTH,
@@ -85,6 +88,7 @@ fn window() {
         Vec3::new(-100., 0., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
+        10.0,
     );
 
     let ball_top = BallObject::new(
@@ -92,6 +96,7 @@ fn window() {
         Vec3::new(0., 100., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
+        10.0,
     );
 
     let ball_links = BallObject::new(
@@ -99,6 +104,7 @@ fn window() {
         Vec3::new(100., 0., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
+        10.0,
     );
 
     let ball_unten = BallObject::new(
@@ -106,9 +112,26 @@ fn window() {
         Vec3::new(0., 100., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
+        10.0,
     );
 
-    let mut ball_objects: Vec<BallObject> = vec![ball_top, ball_unten, ball_links, ball_rechts];
+    let ball1 = BallObject::new(
+        Vec3::new(200.0, 100.0, 0.0),
+        Vec3::new(0., 0., 0.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+        10.0,
+    );
+
+    let ball2 = BallObject::new(
+        Vec3::new(250.0, 100.0, 0.0),
+        Vec3::new(0., 0., 0.),
+        10.,
+        Vec3::new(0.5, 0.5, 0.2),
+        10.0,
+    );
+
+    let mut ball_objects: Vec<BallObject> = vec![ball1, ball2];
 
     let mut square_objects: Vec<SquareObject> = vec![square];
 
@@ -136,6 +159,15 @@ fn window() {
             ));
             frame_count = 0;
             fps_timer = 0.0;
+        }
+
+        for i in 0..ball_objects.len() {
+            for j in 0..ball_objects.len() {
+                if i != j {
+                    let other = ball_objects[j].clone();
+                    ball_objects[i].gravity_update(&other, delta_time);
+                }
+            }
         }
 
         //Update physics for balls
@@ -288,6 +320,7 @@ fn random_balls(array: &mut Vec<BallObject>, count: i32) {
                 rand::random_range(0.0..=1.0),
                 rand::random_range(0.0..=1.0),
             ),
+            10.0,
         );
         array.push(ball);
     }

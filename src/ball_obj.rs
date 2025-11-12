@@ -1,6 +1,7 @@
 extern crate glfw;
 use glam::{Mat4, Vec3};
 
+#[derive(Clone)]
 pub struct BallObject {
     pub position: Vec3,
     pub velocity: Vec3,
@@ -10,10 +11,11 @@ pub struct BallObject {
     vbo: u32,
     ebo: u32,
     vertex_count: i32,
+    mass: f32,
 }
 
 impl BallObject {
-    pub fn new(position: Vec3, velocity: Vec3, radius: f32, color: Vec3) -> Self {
+    pub fn new(position: Vec3, velocity: Vec3, radius: f32, color: Vec3, mass: f32) -> Self {
         let mut square = BallObject {
             position,
             velocity,
@@ -23,6 +25,7 @@ impl BallObject {
             vbo: 0,
             ebo: 0,
             vertex_count: 0,
+            mass,
         };
 
         square.mesh();
@@ -33,6 +36,21 @@ impl BallObject {
     pub fn update(&mut self, delta_time: f32) {
         self.position.x += self.velocity.x * delta_time;
         self.position.y += self.velocity.y * delta_time;
+    }
+
+    pub fn gravity_update(&mut self, another_ball: &BallObject, delta_time: f32) {
+        //F = G * (m1 * m2) / r^2
+        let g = 100.0;
+        let direction = another_ball.position - self.position;
+        let r = direction.length();
+        if r < 1.0 {
+            return;
+        }
+
+        let f = g * (self.mass * another_ball.mass) / r.powi(2);
+
+        let acceleration = (direction.normalize() * f) / self.mass;
+        self.velocity += acceleration * delta_time;
     }
 
     pub fn render(&self, shader_program: u32, projection: &Mat4) {
