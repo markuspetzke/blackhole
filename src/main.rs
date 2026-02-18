@@ -1,5 +1,5 @@
 extern crate glfw;
-use glfw::{Action, Context, Key, fail_on_errors};
+use glfw::{Action, Context, Key, MouseButton, fail_on_errors};
 extern crate gl;
 use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
@@ -44,6 +44,7 @@ fn window() {
             .get_proc_address(s)
             .map_or(std::ptr::null(), |p| p as *const _)
     });
+    window.set_mouse_button_polling(true);
     window.set_key_polling(true);
 
     let vertex_source = load_shader_source("./shader/vertex.glsl");
@@ -280,8 +281,8 @@ fn window() {
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
             match event {
-                glfw::WindowEvent::Key(Key::Space, _, Action::Press, _) => {
-                    random_balls(&mut ball_objects, count);
+                glfw::WindowEvent::MouseButton(MouseButton::Button1, Action::Press, _) => {
+                    random_balls(&mut ball_objects, 1, &mut window);
                 }
                 glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
                     ball_objects.clear();
@@ -296,17 +297,18 @@ fn window() {
     }
 }
 
-fn random_balls(array: &mut Vec<BallObject>, count: i32) {
+fn random_balls(array: &mut Vec<BallObject>, count: i32, window: &mut glfw::Window) {
     for _i in 0..count {
         let rng_size = rand::random_range(1.0..=10.);
         let rng_velox = rand::random_range(1.0..=5.);
         let rng_veloy = rand::random_range(1.0..=5.);
-        let rng_posx = rand::random_range(0.0..=1.);
-        let rng_posy = rand::random_range(0.0..=1.);
+
+        let (xpos, ypos) = window.get_cursor_pos();
+        let flipped_ypos = SRC_HEIGHT as f64 - ypos;
 
         let ball = BallObject::new(
-            Vec3::new(400.0 * rng_posx, 300.0 * rng_posy, 0.0),
-            Vec3::new(150.0 * rng_velox, 200.0 * rng_veloy, 0.),
+            Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
+            Vec3::new(50.0 * rng_velox, 20.0 * rng_veloy, 0.),
             rng_size,
             Color::new(
                 rand::random_range(0..=255),
