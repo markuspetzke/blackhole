@@ -1,12 +1,33 @@
 extern crate glfw;
 use glam::{Mat4, Vec3};
 
+#[derive(Debug, Clone, Copy)]
+pub struct Color {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+
+impl Color {
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b }
+    }
+
+    pub fn to_vec(&self) -> Vec3 {
+        Vec3::new(
+            self.r as f32 / 255.0,
+            self.g as f32 / 255.0,
+            self.b as f32 / 255.0,
+        )
+    }
+}
+
 #[derive(Clone)]
 pub struct BallObject {
     pub position: Vec3,
     pub velocity: Vec3,
     pub radius: f32,
-    pub color: Vec3,
+    pub color: Color,
     vao: u32,
     vbo: u32,
     ebo: u32,
@@ -15,7 +36,7 @@ pub struct BallObject {
 }
 
 impl BallObject {
-    pub fn new(position: Vec3, velocity: Vec3, radius: f32, color: Vec3, mass: f32) -> Self {
+    pub fn new(position: Vec3, velocity: Vec3, radius: f32, color: Color, mass: f32) -> Self {
         let mut square = BallObject {
             position,
             velocity,
@@ -74,7 +95,12 @@ impl BallObject {
 
             let color_name = std::ffi::CString::new("objectColor").unwrap();
             let colorloc = gl::GetUniformLocation(shader_program, color_name.as_ptr());
-            gl::Uniform3f(colorloc, self.color.x, self.color.y, self.color.z);
+            gl::Uniform3f(
+                colorloc,
+                self.color.to_vec().x,
+                self.color.to_vec().y,
+                self.color.to_vec().z,
+            );
 
             gl::BindVertexArray(self.vao);
             gl::DrawElements(

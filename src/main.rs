@@ -16,6 +16,8 @@ use collision::*;
 mod line_renderer;
 use line_renderer::LineRenderer;
 
+use crate::ball_obj::Color;
+
 const SRC_WIDTH: u32 = 800;
 const SRC_HEIGHT: u32 = 600;
 
@@ -85,7 +87,7 @@ fn window() {
         Vec3::new(400.0, 300.0, 0.0),
         Vec3::new(0., 0., 0.),
         100.,
-        Vec3::new(0., 0., 0.),
+        Color::new(0, 0, 0),
         5000.,
     );
 
@@ -93,7 +95,7 @@ fn window() {
         Vec3::new(200.0, 100.0, 0.0),
         Vec3::new(0., 40., 0.),
         10.,
-        Vec3::new(0.5, 0.5, 0.2),
+        Color::new(0, 200, 100),
         10.0,
     );
 
@@ -306,10 +308,10 @@ fn random_balls(array: &mut Vec<BallObject>, count: i32) {
             Vec3::new(400.0 * rng_posx, 300.0 * rng_posy, 0.0),
             Vec3::new(150.0 * rng_velox, 200.0 * rng_veloy, 0.),
             rng_size,
-            Vec3::new(
-                rand::random_range(0.0..=1.0),
-                rand::random_range(0.0..=1.0),
-                rand::random_range(0.0..=1.0),
+            Color::new(
+                rand::random_range(0..=255),
+                rand::random_range(0..=255),
+                rand::random_range(0..=255),
             ),
             10.0,
         );
