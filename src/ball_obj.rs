@@ -11,7 +11,7 @@ pub struct BallObject {
     vbo: u32,
     ebo: u32,
     vertex_count: i32,
-    mass: f32,
+    pub mass: f32,
 }
 
 impl BallObject {

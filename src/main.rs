@@ -13,8 +13,6 @@ use ball_obj::BallObject;
 mod collision;
 use collision::*;
 
-// mod gravity;
-
 mod line_renderer;
 use line_renderer::LineRenderer;
 
@@ -75,65 +73,33 @@ fn window() {
     };
 
     let line_renderer = LineRenderer::new();
+    //
+    // let square = SquareObject::new(
+    //     Vec3::new(200.0, 300.0, 0.0),
+    //     std::f32::consts::PI / 6.,
+    //     100.0,
+    //     Vec3::new(0.5, 0.5, 0.2),
+    // );
 
-    let square = SquareObject::new(
-        Vec3::new(200.0, 300.0, 0.0),
-        std::f32::consts::PI / 6.,
-        100.0,
-        Vec3::new(0.5, 0.5, 0.2),
-    );
-
-    let ball_rechts = BallObject::new(
+    let blackhole = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
-        Vec3::new(-100., 0., 0.),
-        10.,
-        Vec3::new(0.5, 0.5, 0.2),
-        10.0,
-    );
-
-    let ball_top = BallObject::new(
-        Vec3::new(200.0, 400.0, 0.0),
-        Vec3::new(0., 100., 0.),
-        10.,
-        Vec3::new(0.5, 0.5, 0.2),
-        10.0,
-    );
-
-    let ball_links = BallObject::new(
-        Vec3::new(100.0, 300.0, 0.0),
-        Vec3::new(100., 0., 0.),
-        10.,
-        Vec3::new(0.5, 0.5, 0.2),
-        10.0,
-    );
-
-    let ball_unten = BallObject::new(
-        Vec3::new(200.0, 100.0, 0.0),
-        Vec3::new(0., 100., 0.),
-        10.,
-        Vec3::new(0.5, 0.5, 0.2),
-        10.0,
+        Vec3::new(0., 0., 0.),
+        100.,
+        Vec3::new(0., 0., 0.),
+        5000.,
     );
 
     let ball1 = BallObject::new(
         Vec3::new(200.0, 100.0, 0.0),
-        Vec3::new(0., 0., 0.),
+        Vec3::new(0., 40., 0.),
         10.,
         Vec3::new(0.5, 0.5, 0.2),
         10.0,
     );
 
-    let ball2 = BallObject::new(
-        Vec3::new(250.0, 100.0, 0.0),
-        Vec3::new(0., 0., 0.),
-        10.,
-        Vec3::new(0.5, 0.5, 0.2),
-        10.0,
-    );
+    let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
 
-    let mut ball_objects: Vec<BallObject> = vec![ball1, ball2];
-
-    let mut square_objects: Vec<SquareObject> = vec![square];
+    let mut square_objects: Vec<SquareObject> = vec![];
 
     let mut last_time = glfw.get_time() as f32;
     let mut frame_count = 0;
@@ -200,32 +166,57 @@ fn window() {
             }
         }
 
-        for ball in &mut ball_objects {
-            for square in &mut square_objects {
-                let (collided, side_index, ball_pos) = check_ball_square_collision(
-                    ball.position,
-                    ball.radius,
-                    square.position,
-                    square.size,
-                    square.rotation,
-                );
-                if collided {
-                    let normal = square.get_normal_relative_to(side_index);
+        let len = ball_objects.len();
+        for i in 0..len {
+            for j in (i + 1)..len {
+                let (left, right) = ball_objects.split_at_mut(j);
+                let ball1 = &mut left[i];
+                let ball2 = &mut right[0];
+                let col_vec = check_ball_ball_collision(ball1, ball2);
 
-                    ball.position = ball_pos;
+                match col_vec {
+                    None => (),
+                    Some(col) => {
+                        let total_mass = ball1.mass + ball2.mass;
+                        let rel_vel = ball2.velocity - ball1.velocity;
+                        let vel_along_normal = rel_vel.dot(col);
 
-                    ball.velocity -= 2.0 * ball.velocity.dot(normal) * normal;
-                    // ball.velocity *= 0.9; //Damping
-
-                    normal_square = Vec3::new(ball.velocity.x, ball.velocity.y, 0.0);
-
-                    square.color = Vec3::new(1.0, 0.5, 0.0);
-                    break;
-                } else {
-                    square.color = Vec3::new(0.3, 0.8, 1.0);
+                        let restitution = 1.0_f32;
+                        let impulse_scalar = -(1.0 + restitution) * vel_along_normal / total_mass;
+                        let impulse = col * impulse_scalar;
+                        ball1.velocity -= impulse * ball2.mass;
+                        ball2.velocity += impulse * ball1.mass;
+                    }
                 }
             }
         }
+
+        // for ball1 in &mut ball_objects {
+        //     for square in &mut square_objects {
+        //         let (collided, side_index, ball_pos) = check_ball_square_collision(
+        //             ball.position,
+        //             ball.radius,
+        //             square.position,
+        //             square.size,
+        //             square.rotation,
+        //         );
+        //         if collided {
+        //             let normal = square.get_normal_relative_to(side_index);
+        //
+        //             ball.position = ball_pos;
+        //
+        //             ball.velocity -= 2.0 * ball.velocity.dot(normal) * normal;
+        //             // ball.velocity *= 0.9; //Damping
+        //
+        //             normal_square = Vec3::new(ball.velocity.x, ball.velocity.y, 0.0);
+        //
+        //             square.color = Vec3::new(1.0, 0.5, 0.0);
+        //             break;
+        //         } else {
+        //             square.color = Vec3::new(0.3, 0.8, 1.0);
+        //         }
+        //     }
+        // }
 
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
@@ -258,30 +249,30 @@ fn window() {
                 );
             }
 
-            for square in &square_objects {
-                let normals = square.get_normals();
-                let half = square.size / 2.0;
-
-                let colors = [
-                    Vec3::new(1.0, 0.0, 0.0),
-                    Vec3::new(0.0, 1.0, 0.0),
-                    Vec3::new(0.0, 0.0, 1.0),
-                    Vec3::new(1.0, 1.0, 0.0),
-                ];
-
-                for (i, normal) in normals.iter().enumerate() {
-                    line_renderer.draw_vector(
-                        square.position,
-                        Vec3::new(normal.x, normal.y, 0.0),
-                        half + 30.0,
-                        colors[i],
-                        shader_program,
-                        &ortho,
-                    );
-                }
-
-                square.render(shader_program, &ortho);
-            }
+            // for square in &square_objects {
+            //     let normals = square.get_normals();
+            //     let half = square.size / 2.0;
+            //
+            //     let colors = [
+            //         Vec3::new(1.0, 0.0, 0.0),
+            //         Vec3::new(0.0, 1.0, 0.0),
+            //         Vec3::new(0.0, 0.0, 1.0),
+            //         Vec3::new(1.0, 1.0, 0.0),
+            //     ];
+            //
+            //     for (i, normal) in normals.iter().enumerate() {
+            //         line_renderer.draw_vector(
+            //             square.position,
+            //             Vec3::new(normal.x, normal.y, 0.0),
+            //             half + 30.0,
+            //             colors[i],
+            //             shader_program,
+            //             &ortho,
+            //         );
+            //     }
+            //
+            //     square.render(shader_program, &ortho);
+            // }
         }
 
         glfw.poll_events();
