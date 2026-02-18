@@ -1,11 +1,14 @@
 extern crate glfw;
-use glfw::{Action, Context, Key, MouseButton, fail_on_errors};
+use glfw::{Action, Context, Key, Modifiers, MouseButton, fail_on_errors};
 extern crate gl;
 use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
 
 mod square_obj;
 use square_obj::SquareObject;
+
+mod render_text;
+use render_text::TextRenderer;
 
 mod ball_obj;
 use ball_obj::BallObject;
@@ -111,6 +114,35 @@ fn window() {
     let count = 1;
 
     let mut normal_square = Vec3::ZERO;
+    let vertex_source = load_shader_source("./shader/text_vertex.glsl");
+
+    let fragment_source = load_shader_source("./shader/text_fragment.glsl");
+
+    let text_shader_program = unsafe {
+        // Vertex shader
+        let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
+        let vertex_ptr = vertex_source.as_ptr();
+        gl::ShaderSource(vertex_shader, 1, &vertex_ptr, std::ptr::null());
+        gl::CompileShader(vertex_shader);
+
+        // Fragment shader
+        let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
+        let fragment_ptr = fragment_source.as_ptr();
+        gl::ShaderSource(fragment_shader, 1, &fragment_ptr, std::ptr::null());
+        gl::CompileShader(fragment_shader);
+
+        // Shader program
+        let program = gl::CreateProgram();
+        gl::AttachShader(program, vertex_shader);
+        gl::AttachShader(program, fragment_shader);
+        gl::LinkProgram(program);
+        gl::DeleteShader(vertex_shader);
+        gl::DeleteShader(fragment_shader);
+
+        program
+    };
+
+    let text_renderer = TextRenderer::new(text_shader_program);
 
     // Render loop
     while !window.should_close() {
@@ -139,6 +171,7 @@ fn window() {
             }
         }
 
+        let damping = 0.85;
         //Update physics for balls
         for ball in &mut ball_objects {
             ball.update(delta_time);
@@ -151,7 +184,7 @@ fn window() {
             );
 
             if wall.left || wall.right {
-                ball.velocity.x *= -1.0;
+                ball.velocity.x *= -damping * 1.0;
                 if wall.left {
                     ball.position.x = ball.radius;
                 } else if wall.right {
@@ -160,7 +193,7 @@ fn window() {
             }
 
             if wall.top || wall.bottom {
-                ball.velocity.y *= -1.0;
+                ball.velocity.y *= -damping * 1.0;
                 if wall.bottom {
                     ball.position.y = ball.radius;
                 } else if wall.top {
@@ -181,12 +214,22 @@ fn window() {
                     None => (),
                     Some(col) => {
                         let total_mass = ball1.mass + ball2.mass;
+
+                        let overlap = col.2 - col.1;
+
+                        ball1.position -= col.0.normalize() * overlap * (ball2.mass / total_mass);
+                        ball2.position -= col.0.normalize() * overlap * (ball1.mass / total_mass);
+
                         let rel_vel = ball2.velocity - ball1.velocity;
-                        let vel_along_normal = rel_vel.dot(col);
+                        let vel_along_normal = rel_vel.dot(col.0.normalize());
+
+                        if vel_along_normal > 0.0 {
+                            continue;
+                        }
 
                         let restitution = 1.0_f32;
                         let impulse_scalar = -(1.0 + restitution) * vel_along_normal / total_mass;
-                        let impulse = col * impulse_scalar;
+                        let impulse = col.0.normalize() * impulse_scalar;
                         ball1.velocity -= impulse * ball2.mass;
                         ball2.velocity += impulse * ball1.mass;
                     }
@@ -227,6 +270,8 @@ fn window() {
 
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
+
+            text_renderer.draw("Hello World!", 10.0, 10.0, 24.0, &ortho);
 
             for ball in &ball_objects {
                 ball.render(shader_program, &ortho);
@@ -281,8 +326,16 @@ fn window() {
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
             match event {
-                glfw::WindowEvent::MouseButton(MouseButton::Button1, Action::Press, _) => {
+                glfw::WindowEvent::MouseButton(
+                    MouseButton::Button1,
+                    Action::Press,
+                    Modifiers::Shift,
+                ) => {
                     random_balls(&mut ball_objects, 1, &mut window);
+                }
+
+                glfw::WindowEvent::MouseButton(MouseButton::Button1, Action::Press, _) => {
+                    spawn_ball(&mut ball_objects, 1, &mut window);
                 }
                 glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
                     ball_objects.clear();
@@ -297,6 +350,25 @@ fn window() {
     }
 }
 
+fn spawn_ball(array: &mut Vec<BallObject>, count: i32, window: &mut glfw::Window) {
+    for _i in 0..count {
+        let (xpos, ypos) = window.get_cursor_pos();
+        let flipped_ypos = SRC_HEIGHT as f64 - ypos;
+
+        let ball = BallObject::new(
+            Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
+            Vec3::new(50.0, 0.0, 0.),
+            15.,
+            Color::new(
+                rand::random_range(0..=255),
+                rand::random_range(0..=255),
+                rand::random_range(0..=255),
+            ),
+            10.0,
+        );
+        array.push(ball);
+    }
+}
 fn random_balls(array: &mut Vec<BallObject>, count: i32, window: &mut glfw::Window) {
     for _i in 0..count {
         let rng_size = rand::random_range(1.0..=10.);
