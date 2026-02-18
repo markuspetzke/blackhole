@@ -13,7 +13,7 @@ use ball_obj::BallObject;
 mod collision;
 use collision::*;
 
-mod gravity;
+// mod gravity;
 
 mod line_renderer;
 use line_renderer::LineRenderer;
