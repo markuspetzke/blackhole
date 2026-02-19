@@ -1,6 +1,8 @@
 extern crate glfw;
 use glam::{Mat4, Vec3};
 
+use crate::{SRC_HEIGHT, SRC_WIDTH, collision::*};
+
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
     pub r: u8,
@@ -13,7 +15,7 @@ impl Color {
         Self { r, g, b }
     }
 
-    pub fn to_vec(&self) -> Vec3 {
+    pub fn to_vec(self) -> Vec3 {
         Vec3::new(
             self.r as f32 / 255.0,
             self.g as f32 / 255.0,
@@ -28,25 +30,34 @@ pub struct BallObject {
     pub velocity: Vec3,
     pub radius: f32,
     pub color: Color,
+    pub mass: f32,
+    pub collision: bool,
     vao: u32,
     vbo: u32,
     ebo: u32,
     vertex_count: i32,
-    pub mass: f32,
 }
 
 impl BallObject {
-    pub fn new(position: Vec3, velocity: Vec3, radius: f32, color: Color, mass: f32) -> Self {
+    pub fn new(
+        position: Vec3,
+        velocity: Vec3,
+        radius: f32,
+        color: Color,
+        mass: f32,
+        collision: bool,
+    ) -> Self {
         let mut square = BallObject {
             position,
             velocity,
             radius,
             color,
+            mass,
+            collision: true,
             vao: 0,
             vbo: 0,
             ebo: 0,
             vertex_count: 0,
-            mass,
         };
 
         square.mesh();
@@ -170,6 +181,34 @@ impl BallObject {
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
+        }
+    }
+
+    pub fn wall_collision(&mut self) {
+        let damping = 0.85;
+        let wall = check_wall_collision(
+            self.position,
+            self.radius,
+            SRC_WIDTH as f32,
+            SRC_HEIGHT as f32,
+        );
+
+        if wall.left || wall.right {
+            self.velocity.x *= -damping * 1.0;
+            if wall.left {
+                self.position.x = self.radius;
+            } else if wall.right {
+                self.position.x = SRC_WIDTH as f32 - self.radius;
+            }
+        }
+
+        if wall.top || wall.bottom {
+            self.velocity.y *= -damping * 1.0;
+            if wall.bottom {
+                self.position.y = self.radius;
+            } else if wall.top {
+                self.position.y = SRC_HEIGHT as f32 - self.radius;
+            }
         }
     }
 }

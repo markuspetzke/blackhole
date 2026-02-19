@@ -48,6 +48,7 @@ fn window() {
             .map_or(std::ptr::null(), |p| p as *const _)
     });
     window.set_mouse_button_polling(true);
+    window.set_scroll_polling(true);
     window.set_key_polling(true);
 
     let vertex_source = load_shader_source("./shader/vertex.glsl");
@@ -93,6 +94,7 @@ fn window() {
         100.,
         Color::new(0, 0, 0),
         5000.,
+        true,
     );
 
     let ball1 = BallObject::new(
@@ -101,6 +103,7 @@ fn window() {
         10.,
         Color::new(0, 200, 100),
         10.0,
+        true,
     );
 
     let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
@@ -110,8 +113,6 @@ fn window() {
     let mut last_time = glfw.get_time() as f32;
     let mut frame_count = 0;
     let mut fps_timer = 0.0;
-
-    let count = 1;
 
     let mut normal_square = Vec3::ZERO;
     let vertex_source = load_shader_source("./shader/text_vertex.glsl");
@@ -143,24 +144,12 @@ fn window() {
     };
 
     let text_renderer = TextRenderer::new(text_shader_program);
+    let mut radius = 15.;
 
     // Render loop
     while !window.should_close() {
         let current_time = glfw.get_time() as f32;
         let delta_time = (current_time - last_time).min(0.1);
-
-        //FPS
-        frame_count += 1;
-        fps_timer += delta_time;
-        if fps_timer >= 0.5 {
-            let fps = frame_count as f32 / fps_timer;
-            window.set_title(&format!(
-                "Test Title - FPS: {fps:.1} - Ball Count: {}",
-                ball_objects.len()
-            ));
-            frame_count = 0;
-            fps_timer = 0.0;
-        }
 
         for i in 0..ball_objects.len() {
             for j in 0..ball_objects.len() {
@@ -175,31 +164,7 @@ fn window() {
         //Update physics for balls
         for ball in &mut ball_objects {
             ball.update(delta_time);
-
-            let wall = check_wall_collision(
-                ball.position,
-                ball.radius,
-                SRC_WIDTH as f32,
-                SRC_HEIGHT as f32,
-            );
-
-            if wall.left || wall.right {
-                ball.velocity.x *= -damping * 1.0;
-                if wall.left {
-                    ball.position.x = ball.radius;
-                } else if wall.right {
-                    ball.position.x = SRC_WIDTH as f32 - ball.radius;
-                }
-            }
-
-            if wall.top || wall.bottom {
-                ball.velocity.y *= -damping * 1.0;
-                if wall.bottom {
-                    ball.position.y = ball.radius;
-                } else if wall.top {
-                    ball.position.y = SRC_HEIGHT as f32 - ball.radius;
-                }
-            }
+            ball.wall_collision();
         }
 
         let len = ball_objects.len();
@@ -229,7 +194,7 @@ fn window() {
 
                         let restitution = 1.0_f32;
                         let impulse_scalar = -(1.0 + restitution) * vel_along_normal / total_mass;
-                        let impulse = col.0.normalize() * impulse_scalar;
+                        let impulse = col.0.normalize() * impulse_scalar * damping;
                         ball1.velocity -= impulse * ball2.mass;
                         ball2.velocity += impulse * ball1.mass;
                     }
@@ -271,7 +236,13 @@ fn window() {
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
 
-            text_renderer.draw("Hello World!", 10.0, 10.0, 24.0, &ortho);
+            //FPS
+            frame_count += 1;
+            fps_timer += delta_time;
+
+            let fps = frame_count as f32 / fps_timer;
+            text_renderer.draw(&format!("FPS {fps:.0}"), 10.0, 40.0, 24.0, &ortho);
+            text_renderer.draw(&format!("Counter {radius:.0}"), 10.0, 10.0, 24.0, &ortho);
 
             for ball in &ball_objects {
                 ball.render(shader_program, &ortho);
@@ -326,16 +297,14 @@ fn window() {
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
             match event {
-                glfw::WindowEvent::MouseButton(
-                    MouseButton::Button1,
-                    Action::Press,
-                    Modifiers::Shift,
-                ) => {
-                    random_balls(&mut ball_objects, 1, &mut window);
+                glfw::WindowEvent::Scroll(_, y) if y > 0.0 => {
+                    radius += 1.;
                 }
-
+                glfw::WindowEvent::Scroll(_, y) if y < 0.0 => {
+                    radius -= 1.;
+                }
                 glfw::WindowEvent::MouseButton(MouseButton::Button1, Action::Press, _) => {
-                    spawn_ball(&mut ball_objects, 1, &mut window);
+                    spawn_ball(&mut ball_objects, &mut window, 1, radius);
                 }
                 glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
                     ball_objects.clear();
@@ -350,7 +319,7 @@ fn window() {
     }
 }
 
-fn spawn_ball(array: &mut Vec<BallObject>, count: i32, window: &mut glfw::Window) {
+fn spawn_ball(array: &mut Vec<BallObject>, window: &mut glfw::Window, count: i32, radius: f32) {
     for _i in 0..count {
         let (xpos, ypos) = window.get_cursor_pos();
         let flipped_ypos = SRC_HEIGHT as f64 - ypos;
@@ -358,41 +327,18 @@ fn spawn_ball(array: &mut Vec<BallObject>, count: i32, window: &mut glfw::Window
         let ball = BallObject::new(
             Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
             Vec3::new(50.0, 0.0, 0.),
-            15.,
+            radius,
             Color::new(
                 rand::random_range(0..=255),
                 rand::random_range(0..=255),
                 rand::random_range(0..=255),
             ),
             10.0,
+            true,
         );
         array.push(ball);
     }
 }
-fn random_balls(array: &mut Vec<BallObject>, count: i32, window: &mut glfw::Window) {
-    for _i in 0..count {
-        let rng_size = rand::random_range(1.0..=10.);
-        let rng_velox = rand::random_range(1.0..=5.);
-        let rng_veloy = rand::random_range(1.0..=5.);
-
-        let (xpos, ypos) = window.get_cursor_pos();
-        let flipped_ypos = SRC_HEIGHT as f64 - ypos;
-
-        let ball = BallObject::new(
-            Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
-            Vec3::new(50.0 * rng_velox, 20.0 * rng_veloy, 0.),
-            rng_size,
-            Color::new(
-                rand::random_range(0..=255),
-                rand::random_range(0..=255),
-                rand::random_range(0..=255),
-            ),
-            10.0,
-        );
-        array.push(ball);
-    }
-}
-
 fn main() {
     window();
 }

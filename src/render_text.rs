@@ -110,12 +110,12 @@ impl TextRenderer {
                 * glam::Mat4::from_scale(glam::Vec3::new(width as f32, height as f32, 1.0));
 
             let mvp = *ortho * model;
-            let mvp_loc =
-                gl::GetUniformLocation(self.shader_program, b"mvp\0".as_ptr() as *const _);
+
+            let mvp_loc = gl::GetUniformLocation(self.shader_program, c"mvp".as_ptr() as *const _);
             gl::UniformMatrix4fv(mvp_loc, 1, gl::FALSE, mvp.as_ref().as_ptr());
 
             let color_loc =
-                gl::GetUniformLocation(self.shader_program, b"textColor\0".as_ptr() as *const _);
+                gl::GetUniformLocation(self.shader_program, c"textColor".as_ptr() as *const _);
             gl::Uniform3f(color_loc, 1.0, 1.0, 1.0);
 
             let vertices: [f32; 24] = [
