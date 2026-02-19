@@ -162,13 +162,11 @@ fn window() {
 
         let damping = 0.85;
         //Update physics for balls
-        for ball in &mut ball_objects {
-            ball.update(delta_time);
-            ball.wall_collision();
-        }
 
         let len = ball_objects.len();
         for i in 0..len {
+            ball_objects[i].update(delta_time);
+            ball_objects[i].wall_collision();
             for j in (i + 1)..len {
                 let (left, right) = ball_objects.split_at_mut(j);
                 let ball1 = &mut left[i];

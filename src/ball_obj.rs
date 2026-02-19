@@ -211,4 +211,6 @@ impl BallObject {
             }
         }
     }
+
+    pub fn ball_ball_collision(&mut self) {}
 }
