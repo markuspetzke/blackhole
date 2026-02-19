@@ -4,8 +4,8 @@ extern crate gl;
 use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
 
-mod square_obj;
-use square_obj::SquareObject;
+// mod square_obj;
+// use square_obj::SquareObject;
 
 mod render_text;
 use render_text::TextRenderer;
@@ -79,7 +79,7 @@ fn window() {
     };
 
     let line_renderer = LineRenderer::new();
-    //
+
     // let square = SquareObject::new(
     //     Vec3::new(200.0, 300.0, 0.0),
     //     std::f32::consts::PI / 6.,
@@ -107,13 +107,13 @@ fn window() {
 
     let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
 
-    let mut square_objects: Vec<SquareObject> = vec![];
+    // let mut square_objects: Vec<SquareObject> = vec![];
 
     let mut last_time = glfw.get_time() as f32;
     let mut frame_count = 0;
     let mut fps_timer = 0.0;
 
-    let mut normal_square = Vec3::ZERO;
+    // let mut normal_square = Vec3::ZERO;
     let vertex_source = load_shader_source("./shader/text_vertex.glsl");
 
     let fragment_source = load_shader_source("./shader/text_fragment.glsl");
@@ -144,59 +144,38 @@ fn window() {
 
     let text_renderer = TextRenderer::new(text_shader_program);
     let mut radius = 15.;
+    let mut fps = 0.;
 
     // Render loop
     while !window.should_close() {
+        //FPS
         let current_time = glfw.get_time() as f32;
         let delta_time = (current_time - last_time).min(0.1);
 
-        for i in 0..ball_objects.len() {
-            for j in 0..ball_objects.len() {
+        frame_count += 1;
+        fps_timer += delta_time;
+        if fps_timer > 0.5 {
+            fps = frame_count as f32 / fps_timer;
+        }
+
+        let len = ball_objects.len();
+
+        //Update physics for balls
+        for i in 0..len {
+            ball_objects[i].update(delta_time);
+            ball_objects[i].wall_collision();
+
+            for j in 0..len {
                 if i != j {
                     let other = ball_objects[j].clone();
                     ball_objects[i].gravity_update(&other, delta_time);
                 }
             }
-        }
-
-        //Update physics for balls
-
-        let len = ball_objects.len();
-        for i in 0..len {
-            ball_objects[i].update(delta_time);
-            ball_objects[i].wall_collision();
             for j in (i + 1)..len {
                 let (left, right) = ball_objects.split_at_mut(j);
                 left[i].check_ball_ball_collision(&mut right[0]);
             }
         }
-
-        // for ball1 in &mut ball_objects {
-        //     for square in &mut square_objects {
-        //         let (collided, side_index, ball_pos) = check_ball_square_collision(
-        //             ball.position,
-        //             ball.radius,
-        //             square.position,
-        //             square.size,
-        //             square.rotation,
-        //         );
-        //         if collided {
-        //             let normal = square.get_normal_relative_to(side_index);
-        //
-        //             ball.position = ball_pos;
-        //
-        //             ball.velocity -= 2.0 * ball.velocity.dot(normal) * normal;
-        //             // ball.velocity *= 0.9; //Damping
-        //
-        //             normal_square = Vec3::new(ball.velocity.x, ball.velocity.y, 0.0);
-        //
-        //             square.color = Vec3::new(1.0, 0.5, 0.0);
-        //             break;
-        //         } else {
-        //             square.color = Vec3::new(0.3, 0.8, 1.0);
-        //         }
-        //     }
-        // }
 
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
@@ -205,11 +184,6 @@ fn window() {
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
 
-            //FPS
-            frame_count += 1;
-            fps_timer += delta_time;
-
-            let fps = frame_count as f32 / fps_timer;
             text_renderer.draw(&format!("FPS {fps:.0}"), 10.0, 40.0, 24.0, &ortho);
             text_renderer.draw(&format!("Counter {radius:.0}"), 10.0, 10.0, 24.0, &ortho);
 
@@ -225,42 +199,6 @@ fn window() {
                     &ortho,
                 );
             }
-
-            if normal_square != Vec3::ZERO {
-                line_renderer.draw_vector(
-                    square_objects[0].position,
-                    normal_square,
-                    100.0,
-                    Vec3::new(0.0, 1.0, 0.0),
-                    shader_program,
-                    &ortho,
-                );
-            }
-
-            // for square in &square_objects {
-            //     let normals = square.get_normals();
-            //     let half = square.size / 2.0;
-            //
-            //     let colors = [
-            //         Vec3::new(1.0, 0.0, 0.0),
-            //         Vec3::new(0.0, 1.0, 0.0),
-            //         Vec3::new(0.0, 0.0, 1.0),
-            //         Vec3::new(1.0, 1.0, 0.0),
-            //     ];
-            //
-            //     for (i, normal) in normals.iter().enumerate() {
-            //         line_renderer.draw_vector(
-            //             square.position,
-            //             Vec3::new(normal.x, normal.y, 0.0),
-            //             half + 30.0,
-            //             colors[i],
-            //             shader_program,
-            //             &ortho,
-            //         );
-            //     }
-            //
-            //     square.render(shader_program, &ortho);
-            // }
         }
 
         glfw.poll_events();

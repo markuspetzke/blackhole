@@ -212,6 +212,35 @@ impl BallObject {
         }
     }
 
+    pub fn check_ball_square_collision() {
+        // for ball1 in &mut ball_objects {
+        //     for square in &mut square_objects {
+        //         let (collided, side_index, ball_pos) = check_ball_square_collision(
+        //             ball.position,
+        //             ball.radius,
+        //             square.position,
+        //             square.size,
+        //             square.rotation,
+        //         );
+        //         if collided {
+        //             let normal = square.get_normal_relative_to(side_index);
+        //
+        //             ball.position = ball_pos;
+        //
+        //             ball.velocity -= 2.0 * ball.velocity.dot(normal) * normal;
+        //             // ball.velocity *= 0.9; //Damping
+        //
+        //             normal_square = Vec3::new(ball.velocity.x, ball.velocity.y, 0.0);
+        //
+        //             square.color = Vec3::new(1.0, 0.5, 0.0);
+        //             break;
+        //         } else {
+        //             square.color = Vec3::new(0.3, 0.8, 1.0);
+        //         }
+        //     }
+        // }
+    }
+
     pub fn check_ball_ball_collision(&mut self, ball2: &mut BallObject) {
         let damping = 0.85;
         let delta = ball2.position - self.position;
