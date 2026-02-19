@@ -1,7 +1,5 @@
 use glam::Vec3;
 
-use crate::ball_obj::BallObject;
-
 //OBB
 pub fn check_ball_square_collision(
     ball_pos: Vec3,
@@ -48,21 +46,6 @@ pub fn check_ball_square_collision(
     }
 
     (false, side, ball_pos)
-}
-
-pub fn check_ball_ball_collision(
-    ball1: &BallObject,
-    ball2: &BallObject,
-) -> Option<(Vec3, f32, f32)> {
-    let delta = ball2.position - ball1.position;
-    let distance = delta.length();
-    let mind_dist = ball1.radius + ball2.radius;
-
-    if distance < mind_dist && distance > 0.0 {
-        Some((delta, distance, mind_dist))
-    } else {
-        None
-    }
 }
 
 pub struct WallCollision {

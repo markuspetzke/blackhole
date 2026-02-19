@@ -212,5 +212,32 @@ impl BallObject {
         }
     }
 
-    pub fn ball_ball_collision(&mut self) {}
+    pub fn check_ball_ball_collision(&mut self, ball2: &mut BallObject) {
+        let damping = 0.85;
+        let delta = ball2.position - self.position;
+        let distance = delta.length();
+        let mind_dist = self.radius + ball2.radius;
+
+        if distance < mind_dist && distance > 0.0 {
+            let total_mass = self.mass + ball2.mass;
+
+            let overlap = mind_dist - distance;
+
+            self.position -= delta.normalize() * overlap * (ball2.mass / total_mass);
+            ball2.position -= delta.normalize() * overlap * (self.mass / total_mass);
+
+            let rel_vel = ball2.velocity - self.velocity;
+            let vel_along_normal = rel_vel.dot(delta.normalize());
+
+            if vel_along_normal > 0.0 {
+                return;
+            }
+
+            let restitution = 1.0_f32;
+            let impulse_scalar = -(1.0 + restitution) * vel_along_normal / total_mass;
+            let impulse = delta.normalize() * impulse_scalar * damping;
+            self.velocity -= impulse * ball2.mass;
+            ball2.velocity += impulse * self.mass;
+        }
+    }
 }

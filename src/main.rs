@@ -1,5 +1,5 @@
 extern crate glfw;
-use glfw::{Action, Context, Key, Modifiers, MouseButton, fail_on_errors};
+use glfw::{Action, Context, Key, MouseButton, fail_on_errors};
 extern crate gl;
 use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
@@ -14,7 +14,6 @@ mod ball_obj;
 use ball_obj::BallObject;
 
 mod collision;
-use collision::*;
 
 mod line_renderer;
 use line_renderer::LineRenderer;
@@ -160,7 +159,6 @@ fn window() {
             }
         }
 
-        let damping = 0.85;
         //Update physics for balls
 
         let len = ball_objects.len();
@@ -169,34 +167,7 @@ fn window() {
             ball_objects[i].wall_collision();
             for j in (i + 1)..len {
                 let (left, right) = ball_objects.split_at_mut(j);
-                let ball1 = &mut left[i];
-                let ball2 = &mut right[0];
-                let col_vec = check_ball_ball_collision(ball1, ball2);
-
-                match col_vec {
-                    None => (),
-                    Some(col) => {
-                        let total_mass = ball1.mass + ball2.mass;
-
-                        let overlap = col.2 - col.1;
-
-                        ball1.position -= col.0.normalize() * overlap * (ball2.mass / total_mass);
-                        ball2.position -= col.0.normalize() * overlap * (ball1.mass / total_mass);
-
-                        let rel_vel = ball2.velocity - ball1.velocity;
-                        let vel_along_normal = rel_vel.dot(col.0.normalize());
-
-                        if vel_along_normal > 0.0 {
-                            continue;
-                        }
-
-                        let restitution = 1.0_f32;
-                        let impulse_scalar = -(1.0 + restitution) * vel_along_normal / total_mass;
-                        let impulse = col.0.normalize() * impulse_scalar * damping;
-                        ball1.velocity -= impulse * ball2.mass;
-                        ball2.velocity += impulse * ball1.mass;
-                    }
-                }
+                left[i].check_ball_ball_collision(&mut right[0]);
             }
         }
 
