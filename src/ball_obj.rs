@@ -1,7 +1,7 @@
 extern crate glfw;
 use glam::{Mat4, Vec3, Vec4};
 
-use crate::{SRC_HEIGHT, SRC_WIDTH, collision::*};
+use crate::{SRC_HEIGHT, SRC_WIDTH, collision::*, line_renderer::LineRenderer};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -91,6 +91,7 @@ impl BallObject {
 
     pub fn render(&mut self, shader_program: u32, projection: &Mat4) {
         self.mesh();
+        let line_renderer = LineRenderer::new();
         unsafe {
             gl::UseProgram(shader_program);
 
@@ -125,6 +126,14 @@ impl BallObject {
                 self.vertex_count,
                 gl::UNSIGNED_INT,
                 std::ptr::null(),
+            );
+            line_renderer.draw_vector(
+                self.position,
+                Vec3::new(self.velocity.x, self.velocity.y, 0.0),
+                50.0 + self.radius,
+                Vec3::new(1.0, 0.0, 0.0),
+                shader_program,
+                projection,
             );
         }
     }
