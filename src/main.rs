@@ -213,7 +213,7 @@ fn window() {
                 line_renderer.draw_vector(
                     ball.position,
                     Vec3::new(ball.velocity.x, ball.velocity.y, 0.0),
-                    50.0,
+                    50.0 + ball.radius,
                     Vec3::new(1.0, 0.0, 0.0),
                     shader_program,
                     &ortho,
