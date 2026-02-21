@@ -49,7 +49,7 @@ impl BallObject {
         has_collision: bool,
         has_gravity: bool,
     ) -> Self {
-        let mut square = BallObject {
+        BallObject {
             position,
             velocity,
             radius,
@@ -61,11 +61,7 @@ impl BallObject {
             vbo: 0,
             ebo: 0,
             vertex_count: 0,
-        };
-
-        square.mesh();
-
-        square
+        }
     }
 
     pub fn update(&mut self, delta_time: f32) {
@@ -74,6 +70,9 @@ impl BallObject {
     }
 
     pub fn gravity_update(&mut self, another_ball: &BallObject, delta_time: f32) {
+        if !self.has_gravity {
+            return;
+        }
         //F = G * (m1 * m2) / r^2
         let g = 100.0;
         let direction = another_ball.position - self.position;
@@ -88,7 +87,8 @@ impl BallObject {
         self.velocity += acceleration * delta_time;
     }
 
-    pub fn render(&self, shader_program: u32, projection: &Mat4) {
+    pub fn render(&mut self, shader_program: u32, projection: &Mat4) {
+        self.mesh();
         unsafe {
             gl::UseProgram(shader_program);
 
@@ -245,6 +245,9 @@ impl BallObject {
     }
 
     pub fn check_ball_ball_collision(&mut self, ball2: &mut BallObject) {
+        if !self.has_collision {
+            return;
+        }
         let damping = 0.85;
         let delta = ball2.position - self.position;
         let distance = delta.length();

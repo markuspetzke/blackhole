@@ -129,6 +129,15 @@ fn window() {
         Color::new(0, 200, 100),
         10.0,
         true,
+        true,
+    );
+    let mut mouse_ball = BallObject::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0., 0., 0.),
+        10.,
+        Color::new(250, 250, 250),
+        0.0,
+        false,
         false,
     );
 
@@ -155,6 +164,13 @@ fn window() {
         if fps_timer > 0.5 {
             fps = frame_count as f32 / fps_timer;
         }
+
+        mouse_ball.radius = radius;
+        mouse_ball.position = Vec3::new(
+            window.get_cursor_pos().0 as f32,
+            SRC_HEIGHT as f32 - window.get_cursor_pos().1 as f32,
+            0.,
+        );
 
         let len = ball_objects.len();
 
@@ -188,9 +204,10 @@ fn window() {
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
 
             text_renderer.draw(&format!("FPS {fps:.0}"), 10.0, 40.0, 24.0, &ortho);
-            text_renderer.draw(&format!("Counter {radius:.0}"), 10.0, 10.0, 24.0, &ortho);
+            text_renderer.draw(&format!("Radius {radius:.0}"), 10.0, 10.0, 24.0, &ortho);
 
-            for ball in &ball_objects {
+            mouse_ball.render(shader_program, &ortho);
+            for ball in &mut ball_objects {
                 ball.render(shader_program, &ortho);
 
                 line_renderer.draw_vector(
