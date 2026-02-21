@@ -77,43 +77,6 @@ fn window() {
 
         program
     };
-
-    let line_renderer = LineRenderer::new();
-
-    // let square = SquareObject::new(
-    //     Vec3::new(200.0, 300.0, 0.0),
-    //     std::f32::consts::PI / 6.,
-    //     100.0,
-    //     Vec3::new(0.5, 0.5, 0.2),
-    // );
-
-    let blackhole = BallObject::new(
-        Vec3::new(400.0, 300.0, 0.0),
-        Vec3::new(0., 0., 0.),
-        100.,
-        Color::new(0, 0, 0),
-        5000.,
-        true,
-    );
-
-    let ball1 = BallObject::new(
-        Vec3::new(200.0, 100.0, 0.0),
-        Vec3::new(0., 40., 0.),
-        10.,
-        Color::new(0, 200, 100),
-        10.0,
-        true,
-    );
-
-    let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
-
-    // let mut square_objects: Vec<SquareObject> = vec![];
-
-    let mut last_time = glfw.get_time() as f32;
-    let mut frame_count = 0;
-    let mut fps_timer = 0.0;
-
-    // let mut normal_square = Vec3::ZERO;
     let vertex_source = load_shader_source("./shader/text_vertex.glsl");
 
     let fragment_source = load_shader_source("./shader/text_fragment.glsl");
@@ -142,7 +105,42 @@ fn window() {
         program
     };
 
+    // let square = SquareObject::new(
+    //     Vec3::new(200.0, 300.0, 0.0),
+    //     std::f32::consts::PI / 6.,
+    //     100.0,
+    //     Vec3::new(0.5, 0.5, 0.2),
+    // );
+
+    let blackhole = BallObject::new(
+        Vec3::new(400.0, 300.0, 0.0),
+        Vec3::new(0., 0., 0.),
+        100.,
+        Color::new(0, 0, 0),
+        5000.,
+        false,
+        true,
+    );
+
+    let ball1 = BallObject::new(
+        Vec3::new(200.0, 100.0, 0.0),
+        Vec3::new(0., 40., 0.),
+        10.,
+        Color::new(0, 200, 100),
+        10.0,
+        true,
+        false,
+    );
+
+    let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
+    // let mut square_objects: Vec<SquareObject> = vec![];
+    let line_renderer = LineRenderer::new();
     let text_renderer = TextRenderer::new(text_shader_program);
+
+    let mut last_time = glfw.get_time() as f32;
+    let mut frame_count = 0;
+    let mut fps_timer = 0.0;
+
     let mut radius = 15.;
     let mut fps = 0.;
 
@@ -168,12 +166,17 @@ fn window() {
             for j in 0..len {
                 if i != j {
                     let other = ball_objects[j].clone();
-                    ball_objects[i].gravity_update(&other, delta_time);
+                    if ball_objects[i].has_gravity {
+                        ball_objects[i].gravity_update(&other, delta_time);
+                    }
                 }
             }
             for j in (i + 1)..len {
                 let (left, right) = ball_objects.split_at_mut(j);
-                left[i].check_ball_ball_collision(&mut right[0]);
+
+                if left[i].has_collision && right[0].has_collision {
+                    left[i].check_ball_ball_collision(&mut right[0]);
+                }
             }
         }
 
@@ -241,6 +244,7 @@ fn spawn_ball(array: &mut Vec<BallObject>, window: &mut glfw::Window, count: i32
                 rand::random_range(0..=255),
             ),
             10.0,
+            true,
             true,
         );
         array.push(ball);
