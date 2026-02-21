@@ -1,5 +1,5 @@
 extern crate glfw;
-use glam::{Mat4, Vec3};
+use glam::{Mat4, Vec3, Vec4};
 
 use crate::{SRC_HEIGHT, SRC_WIDTH, collision::*};
 
@@ -8,18 +8,20 @@ pub struct Color {
     pub r: u8,
     pub g: u8,
     pub b: u8,
+    pub a: u8,
 }
 
 impl Color {
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Self { r, g, b }
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
     }
 
-    pub fn to_vec(self) -> Vec3 {
-        Vec3::new(
+    pub fn to_vec(self) -> Vec4 {
+        Vec4::new(
             self.r as f32 / 255.0,
             self.g as f32 / 255.0,
             self.b as f32 / 255.0,
+            self.a as f32 / 255.0,
         )
     }
 }
@@ -109,11 +111,12 @@ impl BallObject {
 
             let color_name = std::ffi::CString::new("objectColor").unwrap();
             let colorloc = gl::GetUniformLocation(shader_program, color_name.as_ptr());
-            gl::Uniform3f(
+            gl::Uniform4f(
                 colorloc,
                 self.color.to_vec().x,
                 self.color.to_vec().y,
                 self.color.to_vec().z,
+                self.color.to_vec().w,
             );
 
             gl::BindVertexArray(self.vao);
