@@ -143,7 +143,6 @@ fn window() {
 
     let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
     // let mut square_objects: Vec<SquareObject> = vec![];
-    let line_renderer = LineRenderer::new();
     let text_renderer = TextRenderer::new(text_shader_program);
 
     let mut last_time = glfw.get_time() as f32;
@@ -151,6 +150,7 @@ fn window() {
     let mut fps_timer = 0.0;
 
     let mut radius = 15.;
+    let mut mass = 15.;
     let mut fps = 0.;
 
     // Render loop
@@ -203,8 +203,9 @@ fn window() {
             let ortho =
                 Mat4::orthographic_rh_gl(0.0, SRC_WIDTH as f32, 0.0, SRC_HEIGHT as f32, -1.0, 1.0);
 
-            text_renderer.draw(&format!("FPS {fps:.0}"), 10.0, 40.0, 24.0, &ortho);
-            text_renderer.draw(&format!("Radius {radius:.0}"), 10.0, 10.0, 24.0, &ortho);
+            text_renderer.draw(&format!("FPS {fps:.0}"), 10.0, 70.0, 24.0, &ortho);
+            text_renderer.draw(&format!("Radius {radius:.0}"), 10.0, 40.0, 24.0, &ortho);
+            text_renderer.draw(&format!("Mass {mass:.0}"), 10.0, 10.0, 24.0, &ortho);
 
             mouse_ball.render(shader_program, &ortho);
             for ball in &mut ball_objects {
@@ -216,13 +217,24 @@ fn window() {
         for (_, event) in glfw::flush_messages(&events) {
             match event {
                 glfw::WindowEvent::Scroll(_, y) if y > 0.0 => {
-                    radius += 1.;
+                    let shift = window.get_key(Key::LeftShift) == Action::Press;
+                    if shift {
+                        mass += 1.;
+                    } else {
+                        radius += 1.;
+                    }
                 }
                 glfw::WindowEvent::Scroll(_, y) if y < 0.0 => {
-                    radius -= 1.;
+                    let shift = window.get_key(Key::LeftShift) == Action::Press;
+                    if shift {
+                        mass -= 1.;
+                    } else {
+                        radius -= 1.;
+                    }
                 }
+
                 glfw::WindowEvent::MouseButton(MouseButton::Button1, Action::Press, _) => {
-                    spawn_ball(&mut ball_objects, &mut window, 1, radius);
+                    spawn_ball(&mut ball_objects, &mut window, 1, radius, mass);
                 }
                 glfw::WindowEvent::Key(Key::C, _, Action::Press, _) => {
                     ball_objects.clear();
@@ -237,7 +249,13 @@ fn window() {
     }
 }
 
-fn spawn_ball(array: &mut Vec<BallObject>, window: &mut glfw::Window, count: i32, radius: f32) {
+fn spawn_ball(
+    array: &mut Vec<BallObject>,
+    window: &mut glfw::Window,
+    count: i32,
+    radius: f32,
+    mass: f32,
+) {
     for _i in 0..count {
         let (xpos, ypos) = window.get_cursor_pos();
         let flipped_ypos = SRC_HEIGHT as f64 - ypos;
@@ -252,7 +270,7 @@ fn spawn_ball(array: &mut Vec<BallObject>, window: &mut glfw::Window, count: i32
                 rand::random_range(0..=255),
                 255,
             ),
-            10.0,
+            mass,
             true,
             true,
         );
