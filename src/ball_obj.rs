@@ -1,7 +1,9 @@
 extern crate glfw;
 use glam::{Mat4, Vec3, Vec4};
 
-use crate::{SRC_HEIGHT, SRC_WIDTH, collision::*, line_renderer::LineRenderer};
+use crate::{
+    SRC_HEIGHT, SRC_WIDTH, collision::*, light_obj::LightObject, line_renderer::LineRenderer,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -35,6 +37,7 @@ pub struct BallObject {
     pub mass: f32,
     pub has_collision: bool,
     pub has_gravity: bool,
+    pub light_source: LightObject,
     vao: u32,
     vbo: u32,
     ebo: u32,
@@ -50,6 +53,7 @@ impl BallObject {
         mass: f32,
         has_collision: bool,
         has_gravity: bool,
+        light_source: LightObject,
     ) -> Self {
         BallObject {
             position,
@@ -59,6 +63,7 @@ impl BallObject {
             mass,
             has_collision,
             has_gravity,
+            light_source,
             vao: 0,
             vbo: 0,
             ebo: 0,
@@ -119,6 +124,18 @@ impl BallObject {
                 self.color.to_vec().z,
                 self.color.to_vec().w,
             );
+
+            let light_name = std::ffi::CString::new("lightPos").unwrap();
+            let lightloc = gl::GetUniformLocation(shader_program, light_name.as_ptr());
+            gl::Uniform2f(
+                lightloc,
+                self.light_source.position.x,
+                self.light_source.position.y,
+            );
+
+            let ball_pos_name = std::ffi::CString::new("ballPos").unwrap();
+            let ball_pos_loc = gl::GetUniformLocation(shader_program, ball_pos_name.as_ptr());
+            gl::Uniform2f(ball_pos_loc, self.position.x, self.position.y);
 
             gl::BindVertexArray(self.vao);
             gl::DrawElements(

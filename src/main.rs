@@ -7,6 +7,9 @@ use std::{ffi::CString, fs};
 // mod square_obj;
 // use square_obj::SquareObject;
 
+mod light_obj;
+use light_obj::LightObject;
+
 mod render_text;
 use render_text::TextRenderer;
 
@@ -16,7 +19,6 @@ use ball_obj::BallObject;
 mod collision;
 
 mod line_renderer;
-use line_renderer::LineRenderer;
 
 use crate::ball_obj::Color;
 
@@ -112,6 +114,7 @@ fn window() {
     //     Vec3::new(0.5, 0.5, 0.2),
     // );
 
+    let sun = LightObject::new(Vec3::new(600.0, 500.0, 0.0));
     let blackhole = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
         Vec3::new(0., 0., 0.),
@@ -120,6 +123,7 @@ fn window() {
         5000.,
         false,
         true,
+        sun.clone(),
     );
 
     let ball1 = BallObject::new(
@@ -130,6 +134,7 @@ fn window() {
         10.0,
         true,
         true,
+        sun.clone(),
     );
     let mut mouse_ball = BallObject::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -139,9 +144,11 @@ fn window() {
         0.0,
         false,
         false,
+        sun.clone(),
     );
 
     let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
+    let mut light_objects: Vec<LightObject> = vec![sun];
     // let mut square_objects: Vec<SquareObject> = vec![];
     let text_renderer = TextRenderer::new(text_shader_program);
 
@@ -211,6 +218,10 @@ fn window() {
             for ball in &mut ball_objects {
                 ball.render(shader_program, &ortho);
             }
+
+            for light in &mut light_objects {
+                light.render(shader_program, &ortho);
+            }
         }
 
         glfw.poll_events();
@@ -260,21 +271,22 @@ fn spawn_ball(
         let (xpos, ypos) = window.get_cursor_pos();
         let flipped_ypos = SRC_HEIGHT as f64 - ypos;
 
-        let ball = BallObject::new(
-            Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
-            Vec3::new(50.0, 0.0, 0.),
-            radius,
-            Color::new(
-                rand::random_range(0..=255),
-                rand::random_range(0..=255),
-                rand::random_range(0..=255),
-                255,
-            ),
-            mass,
-            true,
-            true,
-        );
-        array.push(ball);
+        // let ball = BallObject::new(
+        //     Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
+        //     Vec3::new(50.0, 0.0, 0.),
+        //     radius,
+        //     Color::new(
+        //         rand::random_range(0..=255),
+        //         rand::random_range(0..=255),
+        //         rand::random_range(0..=255),
+        //         255,
+        //     ),
+        //     mass,
+        //     true,
+        //     true,
+        //     ,
+        // );
+        // array.push(ball);
     }
 }
 fn main() {
