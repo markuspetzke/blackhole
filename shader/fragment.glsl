@@ -10,7 +10,7 @@ float calc_basic_light() {
 
 	vec2 worldPos = fragmentPos.xy + ballPos;
 
-	float dist = length(worldPos -lightPos);
+	float dist = length(worldPos - lightPos);
 	return 1.0 - clamp(dist / 800.0, 0.0, 1.0);
 
 }

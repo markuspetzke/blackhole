@@ -30,6 +30,32 @@ fn load_shader_source(path: &str) -> CString {
     CString::new(source).unwrap()
 }
 
+unsafe fn create_shader_program(vert_path: &str, frag_path: &str) -> u32 {
+    unsafe {
+        let vert_src = load_shader_source(vert_path);
+        let frag_src = load_shader_source(frag_path);
+        // Vertex shader
+        let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
+        gl::ShaderSource(vertex_shader, 1, &vert_src.as_ptr(), std::ptr::null());
+        gl::CompileShader(vertex_shader);
+
+        // Fragment shader
+        let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
+        gl::ShaderSource(fragment_shader, 1, &frag_src.as_ptr(), std::ptr::null());
+        gl::CompileShader(fragment_shader);
+
+        // Shader program
+        let program = gl::CreateProgram();
+        gl::AttachShader(program, vertex_shader);
+        gl::AttachShader(program, fragment_shader);
+        gl::LinkProgram(program);
+        gl::DeleteShader(vertex_shader);
+        gl::DeleteShader(fragment_shader);
+
+        program
+    }
+}
+
 fn window() {
     let mut glfw = glfw::init(fail_on_errors!()).unwrap();
 
@@ -52,59 +78,11 @@ fn window() {
     window.set_scroll_polling(true);
     window.set_key_polling(true);
 
-    let vertex_source = load_shader_source("./shader/vertex.glsl");
-
-    let fragment_source = load_shader_source("./shader/fragment.glsl");
-
-    let shader_program = unsafe {
-        // Vertex shader
-        let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        let vertex_ptr = vertex_source.as_ptr();
-        gl::ShaderSource(vertex_shader, 1, &vertex_ptr, std::ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        // Fragment shader
-        let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        let fragment_ptr = fragment_source.as_ptr();
-        gl::ShaderSource(fragment_shader, 1, &fragment_ptr, std::ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        // Shader program
-        let program = gl::CreateProgram();
-        gl::AttachShader(program, vertex_shader);
-        gl::AttachShader(program, fragment_shader);
-        gl::LinkProgram(program);
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
-
-        program
-    };
-    let vertex_source = load_shader_source("./shader/text_vertex.glsl");
-
-    let fragment_source = load_shader_source("./shader/text_fragment.glsl");
+    let shader_program =
+        unsafe { create_shader_program("./shader/vertex.glsl", "./shader/fragment.glsl") };
 
     let text_shader_program = unsafe {
-        // Vertex shader
-        let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        let vertex_ptr = vertex_source.as_ptr();
-        gl::ShaderSource(vertex_shader, 1, &vertex_ptr, std::ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        // Fragment shader
-        let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        let fragment_ptr = fragment_source.as_ptr();
-        gl::ShaderSource(fragment_shader, 1, &fragment_ptr, std::ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        // Shader program
-        let program = gl::CreateProgram();
-        gl::AttachShader(program, vertex_shader);
-        gl::AttachShader(program, fragment_shader);
-        gl::LinkProgram(program);
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
-
-        program
+        create_shader_program("./shader/text_vertex.glsl", "./shader/text_fragment.glsl")
     };
 
     // let square = SquareObject::new(

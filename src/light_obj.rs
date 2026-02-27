@@ -1,8 +1,6 @@
 extern crate glfw;
 use glam::{Mat4, Vec3, Vec4};
 
-use crate::{SRC_HEIGHT, SRC_WIDTH, collision::*, line_renderer::LineRenderer};
-
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
     pub r: u8,
@@ -82,18 +80,6 @@ impl LightObject {
                 self.color.to_vec().z,
                 self.color.to_vec().w,
             );
-            // let world_pos_name = std::ffi::CString::new("worldPos").unwrap();
-            // let world_pos_loc = gl::GetUniformLocation(shader_program, world_pos_name.as_ptr());
-            // gl::Uniform2f(world_pos_loc, self.position.x, self.position.y);
-            //
-            // let light_name = std::ffi::CString::new("lightPos").unwrap();
-            // let lightloc = gl::GetUniformLocation(shader_program, light_name.as_ptr());
-            // gl::Uniform2f(lightloc, 600., 500.);
-            //
-            // let light_radius_name = std::ffi::CString::new("lightRadius").unwrap();
-            // let light_radius_loc =
-            //     gl::GetUniformLocation(shader_program, light_radius_name.as_ptr());
-            // gl::Uniform1f(light_radius_loc, 40000.0);
 
             gl::BindVertexArray(self.vao);
             gl::DrawElements(
