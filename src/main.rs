@@ -101,7 +101,6 @@ fn window() {
         5000.,
         false,
         true,
-        sun.clone(),
     );
 
     let ball1 = BallObject::new(
@@ -112,7 +111,6 @@ fn window() {
         10.0,
         true,
         true,
-        sun.clone(),
     );
     let mut mouse_ball = BallObject::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -122,7 +120,6 @@ fn window() {
         0.0,
         false,
         false,
-        sun.clone(),
     );
 
     let mut ball_objects: Vec<BallObject> = vec![ball1, blackhole];
@@ -194,9 +191,10 @@ fn window() {
             text_renderer.draw(&format!("Radius {radius:.0}"), 10.0, 40.0, 24.0, &ortho);
             text_renderer.draw(&format!("Mass {mass:.0}"), 10.0, 10.0, 24.0, &ortho);
 
-            mouse_ball.render(shader_program, &ortho);
+            let light_pos = light_objects[0].position;
+            mouse_ball.render(shader_program, &ortho, &light_pos);
             for ball in &mut ball_objects {
-                ball.render(shader_program, &ortho);
+                ball.render(shader_program, &ortho, &light_pos);
             }
 
             for light in &mut light_objects {
@@ -251,22 +249,21 @@ fn spawn_ball(
         let (xpos, ypos) = window.get_cursor_pos();
         let flipped_ypos = SRC_HEIGHT as f64 - ypos;
 
-        // let ball = BallObject::new(
-        //     Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
-        //     Vec3::new(50.0, 0.0, 0.),
-        //     radius,
-        //     Color::new(
-        //         rand::random_range(0..=255),
-        //         rand::random_range(0..=255),
-        //         rand::random_range(0..=255),
-        //         255,
-        //     ),
-        //     mass,
-        //     true,
-        //     true,
-        //     ,
-        // );
-        // array.push(ball);
+        let ball = BallObject::new(
+            Vec3::new(xpos as f32, flipped_ypos as f32, 0.0),
+            Vec3::new(50.0, 0.0, 0.),
+            radius,
+            Color::new(
+                rand::random_range(0..=255),
+                rand::random_range(0..=255),
+                rand::random_range(0..=255),
+                255,
+            ),
+            mass,
+            true,
+            true,
+        );
+        array.push(ball);
     }
 }
 fn main() {

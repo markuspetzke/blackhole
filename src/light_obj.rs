@@ -81,6 +81,18 @@ impl LightObject {
                 self.color.to_vec().w,
             );
 
+            let ball_pos_name = std::ffi::CString::new("ballPos").unwrap();
+            let ball_pos_loc = gl::GetUniformLocation(shader_program, ball_pos_name.as_ptr());
+            gl::Uniform2f(ball_pos_loc, self.position.x, self.position.y);
+
+            gl::BindVertexArray(self.vao);
+            gl::DrawElements(
+                gl::TRIANGLES,
+                self.vertex_count,
+                gl::UNSIGNED_INT,
+                std::ptr::null(),
+            );
+
             gl::BindVertexArray(self.vao);
             gl::DrawElements(
                 gl::TRIANGLES,
