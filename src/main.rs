@@ -148,6 +148,8 @@ fn window() {
         fps_timer += delta_time;
         if fps_timer > 0.5 {
             fps = frame_count as f32 / fps_timer;
+            fps_timer = 0.0;
+            frame_count = 0;
         }
 
         mouse_ball.radius = radius;
