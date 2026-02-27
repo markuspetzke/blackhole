@@ -29,7 +29,6 @@ impl Color {
 pub struct LightObject {
     pub position: Vec3,
     pub color: Color,
-    pub radius: f32,
     mesh: BallMesh,
 }
 
@@ -41,7 +40,6 @@ impl LightObject {
     ) -> Self {
         LightObject {
             position,
-            radius,
             color: Color::new(255, 255, 0, 255),
             mesh: BallMesh::new(radius),
         }
