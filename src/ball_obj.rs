@@ -2,7 +2,7 @@ extern crate glfw;
 use glam::{Mat4, Vec3, Vec4};
 
 use crate::{
-    SRC_HEIGHT, SRC_WIDTH, collision::*, light_obj::LightObject, line_renderer::LineRenderer,
+    SRC_HEIGHT, SRC_WIDTH, ball_mesh::BallMesh, collision::*, line_renderer::LineRenderer,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -37,10 +37,7 @@ pub struct BallObject {
     pub mass: f32,
     pub has_collision: bool,
     pub has_gravity: bool,
-    vao: u32,
-    vbo: u32,
-    ebo: u32,
-    vertex_count: i32,
+    mesh: BallMesh,
 }
 
 impl BallObject {
@@ -61,10 +58,7 @@ impl BallObject {
             mass,
             has_collision,
             has_gravity,
-            vao: 0,
-            vbo: 0,
-            ebo: 0,
-            vertex_count: 0,
+            mesh: BallMesh::new(radius),
         }
     }
 
@@ -92,7 +86,6 @@ impl BallObject {
     }
 
     pub fn render(&mut self, shader_program: u32, projection: &Mat4, light_pos: &Vec3) {
-        self.mesh();
         let line_renderer = LineRenderer::new();
         unsafe {
             gl::UseProgram(shader_program);
@@ -130,10 +123,10 @@ impl BallObject {
             let ball_pos_loc = gl::GetUniformLocation(shader_program, ball_pos_name.as_ptr());
             gl::Uniform2f(ball_pos_loc, self.position.x, self.position.y);
 
-            gl::BindVertexArray(self.vao);
+            gl::BindVertexArray(self.mesh.vao);
             gl::DrawElements(
                 gl::TRIANGLES,
-                self.vertex_count,
+                self.mesh.vertex_count,
                 gl::UNSIGNED_INT,
                 std::ptr::null(),
             );
@@ -145,67 +138,6 @@ impl BallObject {
                 shader_program,
                 projection,
             );
-        }
-    }
-
-    fn mesh(&mut self) {
-        let segments = 32;
-        let mut vertices: Vec<f32> = Vec::new();
-        let mut indices: Vec<u32> = Vec::new();
-
-        vertices.extend_from_slice(&[0.0, 0.0, 0.0]);
-
-        for i in 0..=segments {
-            let angle = (i as f32 / segments as f32) * 2.0 * std::f32::consts::PI;
-            let x = angle.cos() * self.radius;
-            let y = angle.sin() * self.radius;
-            vertices.extend_from_slice(&[x, y, 0.0]);
-        }
-
-        for i in 1..=segments {
-            indices.push(0);
-            indices.push(i);
-            indices.push(i + 1);
-        }
-        self.vertex_count = indices.len() as i32;
-        unsafe {
-            gl::GenVertexArrays(1, &mut self.vao);
-            gl::GenBuffers(1, &mut self.vbo);
-            gl::GenBuffers(1, &mut self.ebo);
-
-            gl::BindVertexArray(self.vao);
-
-            //VBO
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
-            gl::BufferData(
-                gl::ARRAY_BUFFER,
-                (vertices.len() * std::mem::size_of::<f32>()) as isize,
-                vertices.as_ptr() as *const std::ffi::c_void,
-                gl::STATIC_DRAW,
-            );
-
-            //EBO
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
-            gl::BufferData(
-                gl::ELEMENT_ARRAY_BUFFER,
-                (indices.len() * std::mem::size_of::<u32>()) as isize,
-                indices.as_ptr() as *const std::ffi::c_void,
-                gl::STATIC_DRAW,
-            );
-
-            //position
-            gl::VertexAttribPointer(
-                0,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                (3 * std::mem::size_of::<f32>()) as i32,
-                std::ptr::null(),
-            );
-            gl::EnableVertexAttribArray(0);
-
-            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-            gl::BindVertexArray(0);
         }
     }
 

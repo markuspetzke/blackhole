@@ -4,11 +4,11 @@ extern crate gl;
 use glam::{Mat4, Vec3};
 use std::{ffi::CString, fs};
 
-// mod square_obj;
-// use square_obj::SquareObject;
-
 mod light_obj;
 use light_obj::LightObject;
+
+#[path = "mesh/ball_mesh.rs"]
+mod ball_mesh;
 
 mod render_text;
 use render_text::TextRenderer;
@@ -85,14 +85,7 @@ fn window() {
         create_shader_program("./shader/text_vertex.glsl", "./shader/text_fragment.glsl")
     };
 
-    // let square = SquareObject::new(
-    //     Vec3::new(200.0, 300.0, 0.0),
-    //     std::f32::consts::PI / 6.,
-    //     100.0,
-    //     Vec3::new(0.5, 0.5, 0.2),
-    // );
-
-    let sun = LightObject::new(Vec3::new(600.0, 500.0, 0.0));
+    let sun = LightObject::new(Vec3::new(600.0, 500.0, 0.0), 10.);
     let blackhole = BallObject::new(
         Vec3::new(400.0, 300.0, 0.0),
         Vec3::new(0., 0., 0.),
